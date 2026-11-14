@@ -17,7 +17,7 @@
 <style>
 :root{
   --bg:#08080b; --panel:#121218; --panel2:#1b1b23; --line:#272731;
-  --text:#f4f4f6; --muted:#8b8b97; --accent:#FFE600; --accent2:#FFE600; --on-accent:#0b0b0b;
+  --text:#f4f4f6; --muted:#8b8b97; --accent:#F2F2F5; --accent2:var(--accent); --on-accent:#0b0b0b;
   --ok:#2fe39b; --warn:#ff8a1f; --over:#ff3b47;
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -74,7 +74,7 @@ a{color:var(--accent2)}
 .stage.over .st-state{color:var(--over)}
 .st-songs{width:82vw;margin-top:2.6vh;display:flex;flex-direction:column;gap:1.2vh}
 .song{display:flex;align-items:center;gap:1.6vw;padding:1.6vh 2vw;border-radius:1.4vw;text-align:left}
-.song.now{background:#FFE60014;border:2px solid #FFE60099}
+.song.now{background:color-mix(in srgb,var(--accent) 9%,transparent);border:2px solid color-mix(in srgb,var(--accent) 60%,transparent)}
 .song.nx{opacity:.6}
 .song .lbl{font-size:max(11px,1.3vw);font-weight:800;letter-spacing:.18em;color:var(--accent2);width:7vw;flex:none}
 .song.nx .lbl{color:var(--muted)}
@@ -96,7 +96,7 @@ a{color:var(--accent2)}
 .st-conn{position:absolute;bottom:1vh;right:1.2vw;font-size:12px;color:#ffffff55;z-index:6}
 .st-conn.bad{font-size:15px;color:var(--warn);font-weight:700;left:1.2vw;text-align:center}
 @keyframes blink{50%{opacity:.35}}
-@keyframes flash{from{background:var(--accent)}to{background:#fff9b8}}
+@keyframes flash{from{background:var(--accent)}to{background:color-mix(in srgb,var(--accent) 45%,#fff)}}
 
 /* ---------- Control ---------- */
 .ctl{max-width:640px;margin:0 auto;padding:calc(16px + env(safe-area-inset-top)) 16px calc(40px + env(safe-area-inset-bottom))}
@@ -106,7 +106,7 @@ a{color:var(--accent2)}
 .pill{font-size:12px;font-weight:700;padding:6px 10px;border-radius:99px;background:var(--panel2);color:var(--muted);white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
 .pill:before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
 .pill.live{color:var(--ok)} .pill.off{color:var(--over)}
-.live{background:linear-gradient(160deg,#2b2700,#121218 62%);border:1px solid #4d4500;border-radius:22px;padding:16px 16px 14px;margin-bottom:14px;position:sticky;top:8px;z-index:4;box-shadow:0 10px 30px #0009}
+.live{background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 16%,#121218),#121218 62%);border:1px solid color-mix(in srgb,var(--accent) 30%,#272731);border-radius:22px;padding:16px 16px 14px;margin-bottom:14px;position:sticky;top:8px;z-index:4;box-shadow:0 10px 30px #0009}
 .live-label{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent2);font-weight:800}
 .live-title{font-size:18px;font-weight:700;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .live-sub{font-size:13px;color:var(--muted);margin-top:2px;min-height:1.2em}
@@ -123,7 +123,7 @@ a{color:var(--accent2)}
 .btn{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:13px 8px;font-weight:700;font-size:15px;transition:transform .08s,background .15s}
 .btn:active{transform:scale(.96)}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
-.btn.primary.running{background:#2e2a00;border-color:#6b6000;color:var(--accent)}
+.btn.primary.running{background:color-mix(in srgb,var(--accent) 16%,#121218);border-color:color-mix(in srgb,var(--accent) 45%,#272731);color:var(--accent)}
 .btn.danger{color:var(--over)}
 .btn:disabled{opacity:.4}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:16px;margin-bottom:14px}
@@ -133,7 +133,7 @@ a{color:var(--accent2)}
 .setlist{list-style:none}
 .sg{display:flex;align-items:center;gap:10px;padding:10px 10px;border-radius:12px;cursor:pointer}
 .sg+.sg{margin-top:2px}
-.sg.cur{background:#FFE60014;outline:1px solid #FFE60099}
+.sg.cur{background:color-mix(in srgb,var(--accent) 9%,transparent);outline:1px solid color-mix(in srgb,var(--accent) 60%,transparent)}
 .sg.done{opacity:.4}
 .sg .n{width:20px;color:var(--muted);font-size:13px;font-weight:700;flex:none}
 .sg .nm{flex:1;min-width:0;font-weight:700;font-size:15px}
@@ -141,7 +141,7 @@ a{color:var(--accent2)}
 .sg .ld{color:var(--muted);font-size:13px;flex:none;max-width:30%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sg .key{font-size:12px;font-weight:900;background:#ffffff18;border-radius:6px;padding:3px 7px;flex:none}
 .sg.cur .key{background:var(--accent);color:var(--on-accent)}
-.msg-cur{display:flex;align-items:center;gap:10px;background:#FFE60012;border:1px solid #FFE60066;color:var(--accent);border-radius:12px;padding:10px 12px;margin:10px 0 0;font-weight:700}
+.msg-cur{display:flex;align-items:center;gap:10px;background:color-mix(in srgb,var(--accent) 8%,transparent);border:1px solid color-mix(in srgb,var(--accent) 40%,transparent);color:var(--accent);border-radius:12px;padding:10px 12px;margin:10px 0 0;font-weight:700}
 .msg-cur span{flex:1;min-width:0;overflow-wrap:anywhere}
 .msg-cur button{font-size:13px;font-weight:700;color:var(--text);background:#ffffff14;border-radius:8px;padding:6px 10px;white-space:nowrap}
 .msg-form{display:flex;gap:8px;margin-top:12px}
@@ -166,7 +166,7 @@ textarea.input{resize:vertical;min-height:120px;line-height:1.45;font-size:14px}
 .it-meta{font-size:13px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mv{display:flex;flex-direction:column;gap:2px}
 .mv button{width:34px;height:21px;border-radius:6px;background:var(--panel2);font-size:11px;color:var(--muted)}
-.add{width:100%;margin-top:10px;padding:14px;border-radius:14px;border:1px dashed #5a5300;color:var(--accent2);font-weight:700}
+.add{width:100%;margin-top:10px;padding:14px;border-radius:14px;border:1px dashed color-mix(in srgb,var(--accent) 35%,#272731);color:var(--accent2);font-weight:700}
 .empty{color:var(--muted);font-size:14px;padding:8px 0 4px}
 .rundown .sep{font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);padding:14px 0 4px;border-top:0}
 .rundown .sep+.item{border-top:0}
@@ -213,7 +213,7 @@ textarea.input{resize:vertical;min-height:120px;line-height:1.45;font-size:14px}
 .bs-now-who{font-size:max(13px,1.8vw);color:var(--muted);margin-top:.3vh}
 .bs-now-time{font-size:max(28px,5.5vw);font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 .bs-now-time.warn{color:var(--warn)} .bs-now-time.over{color:var(--over)}
-.bs-next{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;padding:3vh 3vw;border-radius:2vw;border:3px solid var(--accent);background:#FFE6000d;transition:background .4s,color .4s}
+.bs-next{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;padding:3vh 3vw;border-radius:2vw;border:3px solid var(--accent);background:color-mix(in srgb,var(--accent) 5%,transparent);transition:background .4s,color .4s}
 .bs-next .lbl{color:var(--accent);font-size:max(14px,1.9vw)}
 .bs-next-title{font-size:max(30px,6.4vw);font-weight:900;line-height:1.02;letter-spacing:-.02em;margin-top:1.4vh}
 .bs-next-who{font-size:max(18px,3.4vw);font-weight:600;margin-top:1vh;color:#e6e6ea}
@@ -221,7 +221,7 @@ textarea.input{resize:vertical;min-height:120px;line-height:1.45;font-size:14px}
 .bs-next.ready{background:var(--accent);color:var(--on-accent)}
 .bs-next.ready .lbl,.bs-next.ready .bs-next-in,.bs-next.ready .bs-next-who{color:var(--on-accent)}
 .bs-next.standby{animation:standby 1s ease-in-out infinite alternate}
-@keyframes standby{from{background:var(--accent)}to{background:#fff9b8}}
+@keyframes standby{from{background:var(--accent)}to{background:color-mix(in srgb,var(--accent) 45%,#fff)}}
 .bs-later{display:flex;gap:1.4vw}
 .bs-later .li{flex:1;min-width:0;padding:1.6vh 1.6vw;border-radius:1.2vw;background:var(--panel);border:1px solid var(--line)}
 .bs-later .li b{display:block;font-size:max(14px,1.9vw);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -236,6 +236,90 @@ textarea.input{resize:vertical;min-height:120px;line-height:1.45;font-size:14px}
 .catch li span{color:var(--warn)}
 .catch .row{display:flex;gap:8px;margin-top:12px}
 .catch .row .btn{flex:1}
+/* ---------- Shell, top bar, devices, events ---------- */
+.shell{min-height:100vh;padding:calc(18px + env(safe-area-inset-top)) 18px calc(32px + env(safe-area-inset-bottom))}
+.wrap{max-width:1040px;margin:0 auto}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 18px}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.logo{width:42px;height:42px;border-radius:13px;background:var(--accent);color:var(--on-accent);display:grid;place-items:center;flex:none}
+.logo svg{width:22px;height:22px}
+.brand-t{font-weight:900;font-size:17px;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand-s{font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46vw}
+.tb-actions{display:flex;align-items:center;gap:8px;flex:none}
+.tbtn{display:inline-flex;align-items:center;gap:7px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:9px 12px;font-size:14px;font-weight:700;color:var(--text);text-decoration:none;white-space:nowrap}
+.tbtn svg{width:17px;height:17px;flex:none}
+.btn svg{width:18px;height:18px;flex:none}
+.topbar .pill{padding:8px 11px;line-height:1;border:1px solid var(--line)}
+@media (max-width:520px){
+  .topbar .pill{padding:5px 8px;font-size:11px}
+  .topbar .logo{width:38px;height:38px;border-radius:12px}
+  .topbar .brand-s{max-width:40vw}
+  .ctl .brand-t{max-width:42vw}
+}
+.tbtn:active{transform:scale(.97)}
+.hero{margin:22px 0 24px}
+.hero .kicker{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:800}
+.hero h1{font-size:clamp(34px,6vw,56px);font-weight:900;letter-spacing:-.03em;line-height:1;margin:8px 0 10px}
+.hero p{color:var(--muted);font-size:16px;line-height:1.5;max-width:560px}
+.roles{display:grid;gap:12px}
+@media (min-width:760px){ .roles{grid-template-columns:repeat(3,1fr);gap:16px} }
+.role{position:relative;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:20px;display:flex;gap:16px;align-items:center;transition:border-color .15s,transform .12s,background .15s}
+@media (min-width:760px){ .role{flex-direction:column;align-items:flex-start;padding:26px;min-height:250px} }
+.role:hover{border-color:color-mix(in srgb,var(--accent) 55%,#272731)}
+.role:active{transform:scale(.985)}
+.role .ri{width:58px;height:58px;border-radius:18px;background:var(--panel2);border:1px solid var(--line);display:grid;place-items:center;flex:none}
+.role .ri svg{width:28px;height:28px}
+.role b{display:block;font-size:19px;letter-spacing:-.01em}
+.role span{display:block;color:var(--muted);font-size:14px;line-height:1.45;margin-top:4px}
+.role .chev{margin-left:auto;color:var(--muted);flex:none}
+@media (min-width:760px){ .role .chev{position:absolute;right:22px;top:26px} }
+.role.cur{border-color:var(--accent)}
+.badge{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;background:var(--accent);color:var(--on-accent);border-radius:99px;padding:3px 8px;margin-left:8px;vertical-align:middle}
+.foot{color:var(--muted);font-size:13px;line-height:1.5;margin-top:22px;text-align:center}
+.sect{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:800;margin:26px 2px 10px}
+.evs{display:grid;gap:10px}
+@media (min-width:760px){ .evs{grid-template-columns:repeat(2,1fr);gap:12px} }
+.evc{display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:12px 16px 12px 12px;transition:border-color .15s,transform .12s}
+.evc:hover{border-color:color-mix(in srgb,var(--accent) 55%,#272731)}
+.evc:active{transform:scale(.985)}
+.evc .dt{width:58px;height:62px;border-radius:14px;background:var(--panel2);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;flex:none;line-height:1}
+.evc .dt small{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.evc .dt b{font-size:23px;font-weight:900;margin:3px 0 2px}
+.evc .tx{flex:1;min-width:0}
+.evc .tx b{display:block;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.evc .tx span{display:block;color:var(--muted);font-size:13px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.evc .chev{color:var(--muted);flex:none}
+.evc.sel{border-color:var(--accent)}
+.evc.sel .dt{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.evc.sel .dt small{color:var(--on-accent)}
+.evc.agape .dt b{color:#FFE600}
+.evc.sel.agape .dt{background:#FFE600;border-color:#FFE600}
+.evc.sel.agape .dt b{color:#0b0b0b}
+.cont{display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:color-mix(in srgb,var(--accent) 10%,var(--panel));border:1px solid color-mix(in srgb,var(--accent) 50%,#272731);border-radius:18px;padding:16px}
+.cont .ri{width:44px;height:44px;border-radius:14px;background:var(--accent);color:var(--on-accent);display:grid;place-items:center;flex:none}
+.cont b{display:block;font-size:16px}
+.cont span{display:block;color:var(--muted);font-size:13px;margin-top:2px}
+.more{margin-top:22px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:4px 16px}
+.more summary{cursor:pointer;padding:14px 0;font-weight:700;color:var(--muted);list-style:none}
+.more summary::-webkit-details-marker{display:none}
+.more[open]{padding-bottom:16px}
+.skel{height:86px;border-radius:18px;background:linear-gradient(90deg,var(--panel),var(--panel2),var(--panel));background-size:200% 100%;animation:sk 1.2s linear infinite}
+@keyframes sk{to{background-position:-200% 0}}
+/* Control: two columns on wide screens */
+.cols{display:block}
+@media (min-width:980px){
+  .ctl{max-width:1280px;padding-left:24px;padding-right:24px}
+  .cols{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:20px;align-items:start}
+  .col-main{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;scrollbar-width:none}
+  .col-main::-webkit-scrollbar{display:none}
+  .col-main .live{position:static}
+  .live-timer{font-size:84px}
+}
+.devrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0 0;margin-top:12px;border-top:1px solid var(--line);font-size:14px;color:var(--muted)}
+/* Overlay buttons on Stage / Backstage */
+.st-fs{display:flex;gap:6px;padding:6px!important;background:#000b!important;border:1px solid #ffffff26!important;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.st-fs .mini{background:#ffffff14;border-color:#ffffff22;color:#fff;font-size:14px;padding:9px 14px;display:inline-flex;align-items:center;gap:7px}
+.st-fs .mini svg{width:16px;height:16px}
 .ampm{font-size:.28em;letter-spacing:0;margin-left:.15em;font-weight:700;color:var(--muted)}
 </style>
 </head>
@@ -304,7 +388,7 @@ var DEFAULT_ITEMS = [
 var DEFAULT = {
   items: [], currentId: null, songIdx: 0, running: false, endsAt: 0, remaining: 0,
   message: null,
-  settings: { eventName: "Agape Night", warnSec: 120, showClock: true, showNext: true, showSongs: true, blank: false, endAt: "", pcoUrl: "", pcoAuto: true, pcoSt: "782160", pcoPlan: "93180450" },
+  settings: { eventName: "Stage Clock", warnSec: 120, showClock: true, showNext: true, showSongs: true, blank: false, endAt: "", pcoUrl: "", pcoAuto: true, pcoSt: "782160", pcoPlan: "93180450" },
   pco: { hash: "", syncedAt: 0 },
   updatedAt: 0
 };
@@ -451,7 +535,7 @@ function connect(){
             synced = true;
             if (view === "control" && !state.items.length) {
               var n = clone(DEFAULT); n.updatedAt = Date.now();
-              if (!eventPlanId()) n.items = clone(DEFAULT_ITEMS); else n.settings.eventName = "Loading from Planning Center …";
+              if (eventPlanId()) n.settings.eventName = "Loading from Planning Center …";
               state = n;
             }
           }
@@ -720,6 +804,30 @@ function renderPco(){
 }
 
 /* ============================================================
+   LOOK & FEEL
+   ============================================================ */
+var ICON = {
+  clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg>',
+  control: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>',
+  stage: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>',
+  backstage: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4.5A1.5 1.5 0 0 1 6.5 3h11A1.5 1.5 0 0 1 19 4.5V21M3 21h18"/><path d="M15 12h.01"/></svg>',
+  list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>',
+  cast: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"/><path d="M3 12a8 8 0 0 1 8 8M3 16a4 4 0 0 1 4 4M3 20h.01"/></svg>',
+  swap: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/></svg>',
+  full: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>',
+  chev: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>',
+  play: '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>'
+};
+var ROLE_LABEL = { control: "Control", stage: "Stage display", backstage: "Backstage" };
+// Each event can bring its own colour; everything else uses the neutral Message look.
+function accentFor(name){ return /agape/i.test(name || "") ? "#FFE600" : "#F2F2F5"; }
+function applyTheme(name){ try { document.documentElement.style.setProperty("--accent", accentFor(name)); } catch(e){} }
+function topbar(sub, actions, title){
+  return '<header class="topbar"><div class="brand"><div class="logo">' + ICON.clock + '</div><div style="min-width:0"><div class="brand-t">' + (title || "Stage Clock") + '</div><div class="brand-s" id="tbSub">' + sub + '</div></div></div>' +
+    '<div class="tb-actions">' + (actions || "") + '</div></header>';
+}
+
+/* ============================================================
    ROUTER
    ============================================================ */
 function parseHash(){
@@ -757,6 +865,7 @@ function route(){
 window.addEventListener("hashchange", route);
 
 function fill(){
+  applyTheme((view === "control" || view === "stage" || view === "backstage") && ROOM ? state.settings.eventName : "");
   if (view === "stage") fillStage();
   else if (view === "control") { fillControl(); renderCatch(); }
   renderConn();
@@ -776,13 +885,20 @@ function renderConn(){
    ============================================================ */
 function base(){ return location.href.split("#")[0]; }
 function devicesHTML(){
-  return '<div class="home"><div class="home-inner">' +
-    '<div class="eyebrow">Message · Planning Center</div><h1>Stage Clock</h1>' +
-    '<p class="lead">What is this device? It remembers your choice.</p>' +
-    '<button class="choice" data-role="control"><div class="ic">🎛️</div><div><b>Control</b><span>Pick the event, run the timer, send messages. Usually your phone.</span></div></button>' +
-    '<button class="choice" data-role="stage"><div class="ic">🖥️</div><div><b>Stage display</b><span>Big countdown for the stage. Shows the event the Control picked.</span></div></button>' +
-    '<button class="choice" data-role="backstage"><div class="ic">🚪</div><div><b>Backstage</b><span>Who’s on next, for the waiting area. Follows the Control too.</span></div></button>' +
-    '<div class="note">Set up each screen once. After that, just pick the event on the Control – Stage and Backstage switch to it automatically.</div>' +
+  var role = store("sc-role");
+  function card(r, desc){
+    return '<button class="role' + (role === r ? " cur" : "") + '" data-role="' + r + '"><div class="ri">' + ICON[r] + '</div>' +
+      '<div style="min-width:0"><b>' + ROLE_LABEL[r] + (role === r ? '<span class="badge">This device</span>' : '') + '</b><span>' + desc + '</span></div><div class="chev">' + ICON.chev + '</div></button>';
+  }
+  return '<div class="shell"><div class="wrap">' +
+    topbar("The Message", role ? '<a class="tbtn" href="#' + role + '">Back</a>' : '') +
+    '<div class="hero"><div class="kicker">Set up this device</div><h1>What should this<br>device be?</h1><p>Choose once – this device will remember it. You can change it any time.</p></div>' +
+    '<div class="roles">' +
+      card("control", "Choose the event, run the timer and send messages. Usually your phone.") +
+      card("stage", "The big countdown for the people on stage. Follows the Control automatically.") +
+      card("backstage", "Shows who’s on next, for the green room. Follows the Control automatically.") +
+    '</div>' +
+    '<p class="foot">Stage and Backstage screens switch to whatever event the Control picks – nothing to type.</p>' +
   '</div></div>';
 }
 function bindDevices(){
@@ -792,16 +908,16 @@ function bindDevices(){
 }
 function pickHTML(){
   var last = store("sc-last-room"), lastName = store("sc-last-name");
-  return '<div class="home" style="align-items:flex-start"><div class="home-inner">' +
-    '<div class="row-head" style="align-items:flex-end;margin:0 0 6px"><div><div class="eyebrow">Control</div><h1 style="margin:4px 0 0;font-size:32px">Pick an event</h1></div><a href="#devices" class="hint" style="text-decoration:none">Change device</a></div>' +
-    '<p class="lead" style="margin:6px 0 18px">Stage and Backstage screens switch to the event you pick.</p>' +
-    (last ? '<button class="choice" id="contLast"><div class="ic">▶</div><div><b>Continue: ' + esc(lastName || last) + '</b><span>The event you had open last</span></div></button>' : '') +
-    '<div class="room"><div class="row-head" style="margin:0 0 4px"><h2 style="font-size:15px">Events from Planning Center</h2><button class="mini" id="evReload">↻</button></div><div id="evList"><p class="hint">Loading events …</p></div></div>' +
-    '<div class="room">' +
-      '<div class="row-head" style="margin:0"><h2 style="font-size:15px">Without Planning Center</h2></div>' +
-      '<button class="btn" id="newRoom" style="width:100%;margin-top:10px">New empty clock</button>' +
+  return '<div class="shell"><div class="wrap">' +
+    topbar("Control", '<a class="tbtn" href="#devices">' + ICON.swap + '<span>Change device</span></a>') +
+    '<div class="hero" style="margin-top:8px"><div class="kicker">Control</div><h1>Choose an event</h1><p>The Stage and Backstage screens will switch to it automatically.</p></div>' +
+    (last ? '<button class="cont" id="contLast"><div class="ri">' + ICON.play + '</div><div style="flex:1;min-width:0"><b>Continue with ' + esc(lastName || "last event") + '</b><span>The event you had open last</span></div><div class="chev" style="color:var(--muted)">' + ICON.chev + '</div></button>' : '') +
+    '<div class="row-head" style="margin:0"><div class="sect">From Planning Center</div><button class="mini" id="evReload" style="margin-top:14px">Refresh</button></div>' +
+    '<div class="evs" id="evList"><div class="skel"></div><div class="skel"></div></div>' +
+    '<details class="more"><summary>More options</summary>' +
+      '<button class="btn" id="newRoom" style="width:100%">New empty clock (without Planning Center)</button>' +
       '<div class="join"><input class="input" id="joinCode" placeholder="Room code" autocomplete="off" autocapitalize="off"><button class="btn" id="joinBtn" style="padding:12px 16px">Open</button></div>' +
-    '</div>' +
+    '</details>' +
   '</div></div>';
 }
 function openEvent(room, name){
@@ -811,7 +927,7 @@ function openEvent(room, name){
 }
 function bindPick(){
   if ($("contLast")) $("contLast").addEventListener("click", function(){ openEvent(store("sc-last-room"), store("sc-last-name")); });
-  $("newRoom").addEventListener("click", function(){ openEvent("agape-" + rnd(10), "New clock"); });
+  $("newRoom").addEventListener("click", function(){ openEvent("room-" + rnd(10), "New clock"); });
   function join(){ var v = $("joinCode").value.trim(); if (/^[A-Za-z0-9_-]{4,64}$/.test(v)) openEvent(v, ""); else toast("That code doesn’t look right"); }
   $("joinBtn").addEventListener("click", join);
   $("joinCode").addEventListener("keydown", function(e){ if (e.key === "Enter") join(); });
@@ -822,10 +938,15 @@ function bindPick(){
 function evName(e){ return cleanT(e.title || "") || e.serviceType || "Event"; }
 function renderEvents(list){
   var box = $("evList"); if (!box) return;
-  if (!list.length) { box.innerHTML = '<p class="hint">No upcoming events found.</p>'; return; }
+  if (!list.length) { box.innerHTML = '<p class="hint">No upcoming events found in Planning Center.</p>'; return; }
   var last = store("sc-last-room");
+  var WD = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"], MO = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   box.innerHTML = list.map(function(e){
-    return '<button class="ev' + (e.room === last ? " sel" : "") + '" data-room="' + esc(e.room) + '" data-name="' + esc(evName(e)) + '"><div class="go">' + (e.room === last ? "✓" : "▶") + '</div><div style="flex:1;min-width:0"><b>' + esc(evName(e)) + '</b><span>' + esc([e.dates, e.serviceType].filter(Boolean).join(" · ")) + '</span></div></button>';
+    var d = new Date(e.sortDate), ok = !isNaN(d), name = evName(e);
+    var sub = [e.title ? e.serviceType : "", ok ? WD[d.getDay()] + " " + clockTxt(d) : e.dates].filter(Boolean).join(" · ");
+    return '<button class="evc' + (e.room === last ? " sel" : "") + (/agape/i.test(name) ? " agape" : "") + '" data-room="' + esc(e.room) + '" data-name="' + esc(name) + '">' +
+      '<div class="dt"><small>' + (ok ? WD[d.getDay()] : "") + '</small><b>' + (ok ? d.getDate() : "?") + '</b><small>' + (ok ? MO[d.getMonth()] : "") + '</small></div>' +
+      '<div class="tx"><b>' + esc(name) + '</b><span>' + esc(sub) + '</span></div><div class="chev">' + ICON.chev + '</div></button>';
   }).join("");
   box.querySelectorAll("[data-room]").forEach(function(b){
     b.addEventListener("click", function(){ openEvent(b.getAttribute("data-room"), b.getAttribute("data-name")); });
@@ -840,7 +961,7 @@ function loadEvents(manual){
     renderEvents(j.plans);
   }).catch(function(){
     var box = $("evList");
-    if (box && !cached) box.innerHTML = '<p class="hint">Couldn’t load events from Planning Center.</p>';
+    if (box && !cached) box.innerHTML = '<p class="hint">Couldn’t load events from Planning Center. Check the internet and tap Refresh.</p>';
   });
 }
 
@@ -861,7 +982,7 @@ function stageHTML(){
     '<div class="st-next" id="stNext"></div>' +
     '<div class="st-msg" id="stMsg" hidden></div>' +
     '<div class="st-blank" id="stBlank" hidden></div>' +
-    '<div class="st-fs" id="stFs" style="display:flex;gap:6px;padding:4px"><button class="mini" id="stFull">⛶ Fullscreen</button><a class="mini" href="#devices" style="text-decoration:none">Change device</a></div>' +
+    '<div class="st-fs" id="stFs"><button class="mini" id="stFull">' + ICON.full + 'Fullscreen</button><a class="mini" href="#devices" style="text-decoration:none">' + ICON.swap + 'Change device</a></div>' +
     '<div class="st-conn" id="stConn"></div>' +
   '</div>';
 }
@@ -894,8 +1015,8 @@ function fillStage(){
   var s = state.settings, c = cur(), i = curIdx();
   $("stEvent").textContent = ROOM ? s.eventName : "Stage Clock";
   $("stClock").style.visibility = s.showClock ? "visible" : "hidden";
-  $("stTitle").textContent = !ROOM ? "Waiting for the Control" : c ? c.title : (state.currentId === "__end" ? "Thank you!" : s.eventName);
-  $("stWho").textContent = !ROOM ? "Pick an event on the Control device" : c ? (c.who || "") : "";
+  $("stTitle").textContent = !ROOM ? "Waiting for an event" : c ? c.title : (state.currentId === "__end" ? "Thank you!" : s.eventName);
+  $("stWho").textContent = !ROOM ? "Choose an event on the Control device" : c ? (c.who || "") : "";
 
   var songsHtml = "";
   var hasSongs = !!(c && s.showSongs && c.songs.length);
@@ -928,20 +1049,28 @@ function backstageHTML(){
     '<div class="bs-next" id="bsNext"><div class="lbl" id="bsNextLbl">Up next</div><div class="bs-next-title" id="bsNextTitle"></div><div class="bs-next-who" id="bsNextWho"></div><div class="bs-next-in" id="bsNextIn"></div></div>' +
     '<div class="bs-later" id="bsLater"></div>' +
     '<div class="st-conn" id="bsConn"></div>' +
-    '<div class="st-fs" id="bsFs" style="padding:4px"><a class="mini" href="#devices" style="text-decoration:none">Change device</a></div>' +
+    '<div class="st-fs" id="bsFs"><button class="mini" id="bsFull">' + ICON.full + 'Fullscreen</button><a class="mini" href="#devices" style="text-decoration:none">' + ICON.swap + 'Change device</a></div>' +
   '</div>';
 }
 function bindBackstage(){
   var btn = $("bsFs"), t = null;
   function wake(){ btn.classList.remove("hide"); clearTimeout(t); t = setTimeout(function(){ btn.classList.add("hide"); }, 3000); }
   document.onmousemove = wake; document.ontouchstart = wake; wake();
+  $("bsFull").addEventListener("click", toggleFull);
+  requestWake();
+}
+function toggleFull(){
+  try {
+    if (!document.fullscreenElement && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(function(){});
+    else if (document.exitFullscreen) document.exitFullscreen().catch(function(){});
+  } catch(e){}
   requestWake();
 }
 function tickBackstage(){
   if (!$("bs")) return;
   if (!ROOM) {
     $("bsEvent").textContent = "Stage Clock"; $("bsClock").textContent = clockTxt();
-    $("bsNowTitle").textContent = "Waiting for the Control"; $("bsNowWho").textContent = "Pick an event on the Control device";
+    $("bsNowTitle").textContent = "Waiting for an event"; $("bsNowWho").textContent = "Choose an event on the Control device";
     $("bsNowTime").textContent = ""; $("bsNext").hidden = true; $("bsLater").innerHTML = ""; return;
   }
   var s = state.settings, c = cur(), ci = curIdx(), p = projection(), now = Date.now();
@@ -989,8 +1118,8 @@ function tickBackstage(){
 var CHIPS = ["1 minute left", "5 minutes left", "Please wrap up", "Last song", "One more song", "Louder please 🎤", "Slow down", "Mic on?", "Amazing! 🙌"];
 function controlHTML(){
   return '<div class="ctl">' +
-    '<header class="ctl-head"><div><div class="eyebrow">Stage Clock · Control</div><h1 id="cEvent"></h1></div>' +
-      '<div style="text-align:right"><span class="pill" id="cConn">Connecting …</span><div style="margin-top:8px;display:flex;gap:10px;justify-content:flex-end"><a href="#" id="cShow">📺 Show on screens</a><a href="#control" id="cHome">Events</a></div></div></header>' +
+    topbar('Control', '<span class="pill" id="cConn">Connecting …</span><a class="tbtn" href="#control" id="cHome">' + ICON.list + '<span>Events</span></a>', '<span id="cEvent"></span>') +
+    '<div class="cols"><div class="col-main">' +
     '<section class="live" id="cLive">' +
       '<div class="live-label">Live now</div>' +
       '<div class="live-title" id="cTitle"></div>' +
@@ -1013,6 +1142,7 @@ function controlHTML(){
       '<div class="row-head"><h2>Setlist</h2><div style="display:flex;gap:6px"><button class="mini" data-act="songPrev">◀ Song</button><button class="mini pri" data-act="songNext">Next song ▶</button></div></div>' +
       '<ol class="setlist" id="cSetlist"></ol>' +
     '</section>' +
+    '</div><div class="col-side">' +
     '<section class="card">' +
       '<h2>Message to stage</h2>' +
       '<div class="msg-cur" id="cMsgCur" hidden><span id="cMsgTxt"></span><button id="cMsgClear">Clear</button></div>' +
@@ -1052,7 +1182,13 @@ function controlHTML(){
         '</div>' +
       '</details>' +
     '</section>' +
-  '</div>' +
+    '<section class="card">' +
+      '<h2 style="margin-bottom:4px">Screens</h2>' +
+      '<p class="hint" style="margin-top:4px">Stage and Backstage screens show the event you picked. If one shows something else, tap below.</p>' +
+      '<button class="btn" id="cShow" style="width:100%;margin-top:12px;display:flex;align-items:center;justify-content:center;gap:8px">' + ICON.cast + 'Show this event on all screens</button>' +
+      '<div class="devrow"><span>This device: <b style="color:var(--text)">Control</b></span><a class="tbtn" href="#devices">' + ICON.swap + '<span>Change device</span></a></div>' +
+    '</section>' +
+  '</div></div></div>' +
   '<div class="sheet-bg" id="sheetBg" hidden><form class="sheet" id="sheet">' +
     '<h3 id="shTitle">Item</h3>' +
     '<div class="field"><label>Title</label><input class="input" id="fTitle" maxlength="80" placeholder="e.g. Worship Set 1" required></div>' +
@@ -1140,7 +1276,7 @@ function confirmBox(text, yes){
 }
 
 function bindControl(){
-  $("cShow").addEventListener("click", function(e){ e.preventDefault(); showOnAllScreens(); toast("Stage & Backstage now show this event"); });
+  $("cShow").addEventListener("click", function(){ showOnAllScreens(); toast("Stage & Backstage now show this event"); });
   document.querySelectorAll("[data-act]").forEach(function(b){ b.addEventListener("click", function(){ actions[b.getAttribute("data-act")](); }); });
   $("msgForm").addEventListener("submit", function(e){ e.preventDefault(); sendMsg($("msgInput").value); $("msgInput").value = ""; $("msgInput").blur(); });
   $("chips").addEventListener("click", function(e){ var c = e.target.closest("[data-chip]"); if (c) sendMsg(c.getAttribute("data-chip")); });
@@ -1186,7 +1322,7 @@ function bindControl(){
       else s.items.push({ id: uid(), title: title, who: who, dur: dur, at: at, songs: songs });
     });
   });
-  $("sName").addEventListener("change", function(){ var v = this.value.trim() || "Agape Night"; commit(function(s){ s.settings.eventName = v.slice(0,40); }); });
+  $("sName").addEventListener("change", function(){ var v = this.value.trim() || "Stage Clock"; commit(function(s){ s.settings.eventName = v.slice(0,40); }); });
   $("sPco").addEventListener("change", function(){
     var v = this.value.trim();
     if (v && !/^https:\/\/[^\s"<>]{4,300}$/.test(v)) { toast("That link doesn’t look right"); return; }
@@ -1235,7 +1371,7 @@ function bindControl(){
   });
   $("resetAll").addEventListener("click", function(){
     confirmBox("Reset the run sheet? Everything is reloaded from Planning Center and the clock stops. Your changes will be lost.", function(){
-      commit(function(s){ var n = clone(DEFAULT); n.items = eventPlanId() ? [] : clone(DEFAULT_ITEMS); n.settings = s.settings; Object.keys(n).forEach(function(k){ s[k] = n[k]; }); });
+      commit(function(s){ var n = clone(DEFAULT); n.items = []; n.settings = s.settings; Object.keys(n).forEach(function(k){ s[k] = n[k]; }); });
       if (pcoMode()) setTimeout(function(){ pcoCheck(true); }, 300);
     });
   });
