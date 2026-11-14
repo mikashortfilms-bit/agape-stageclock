@@ -168,6 +168,15 @@ textarea.input{resize:vertical;min-height:120px;line-height:1.45;font-size:14px}
 .mv button{width:34px;height:21px;border-radius:6px;background:var(--panel2);font-size:11px;color:var(--muted)}
 .add{width:100%;margin-top:10px;padding:14px;border-radius:14px;border:1px dashed #5a5300;color:var(--accent2);font-weight:700}
 .empty{color:var(--muted);font-size:14px;padding:8px 0 4px}
+.rundown .sep{font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);padding:14px 0 4px;border-top:0}
+.rundown .sep+.item{border-top:0}
+.ev{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px 0;border-top:1px solid var(--line)}
+.ev:first-child{border-top:0}
+.ev b{display:block;font-size:16px}
+.ev span{display:block;color:var(--muted);font-size:13px;margin-top:2px}
+.ev .go{flex:none}
+.ev.sel b{color:var(--accent)}
+.ev.sel .go{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 .set-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line);font-size:15px}
 .set-row:first-of-type{border-top:0}
 .set-row .input{flex:none;width:170px;padding:9px 12px;font-size:15px}
@@ -320,6 +329,7 @@ function normalize(d){
       id: str(i.id, 20), title: str(i.title || "Untitled", 80), who: str(i.who, 80),
       dur: Math.max(0, Math.min(36000, Number(i.dur) || 0)),
       at: /^\d{2}:\d{2}$/.test(i.at || "") ? i.at : "",
+      pre: !!i.pre,
       songs: Array.isArray(i.songs) ? i.songs.slice(0,40).map(function(g){ return { t: str(g && g.t, 80), key: str(g && g.key, 8), lead: str(g && g.lead, 60), note: str(g && g.note, 120) }; }).filter(function(g){ return g.t; }) : []
     };
   });
@@ -433,7 +443,11 @@ function connect(){
         setTimeout(function(){
           if (!synced) {
             synced = true;
-            if (view === "control" && !state.items.length) { var n = clone(DEFAULT); n.items = clone(DEFAULT_ITEMS); n.updatedAt = Date.now(); state = n; }
+            if (view === "control" && !state.items.length) {
+              var n = clone(DEFAULT); n.updatedAt = Date.now();
+              if (!eventPlanId()) n.items = clone(DEFAULT_ITEMS); else n.settings.eventName = "Loading from Planning Center …";
+              state = n;
+            }
           }
           // The controller keeps every server up to date with the newest state.
           if (view === "control" && state.updatedAt > 0) publishTo(c);
@@ -516,6 +530,16 @@ function mapPco(d){
   var svc = (d.times || []).filter(function(t){ return t.type === "service"; })
     .map(function(t){ return new Date(t.startsAt).getTime(); }).filter(function(x){ return !isNaN(x); }).sort(function(a, b){ return a - b; })[0];
   var cursor = svc == null ? null : svc;
+  // Pre-service items (setup, soundcheck …) run back-to-back and end when the service starts.
+  var preItems = items.filter(function(i){ return i.type !== "header" && i.position === "pre" && (Number(i.length) || 0) > 0; });
+  var preTotal = preItems.reduce(function(a, i){ return a + (Number(i.length) || 0); }, 0);
+  var pc = cursor == null ? null : cursor - preTotal * 1000, preOut = [];
+  preItems.forEach(function(i){
+    var t = cleanT(i.title).replace(/[\u2757\uFE0F\u203C]+/g, "").trim(), who = "";
+    if (t.indexOf("//") >= 0) { var pp = t.split("//"); who = pp[0].trim(); t = pp.slice(1).join("//").trim(); }
+    preOut.push({ id: "pco" + i.id, title: t || "Untitled", who: who, dur: Number(i.length) || 0, at: hm(pc), songs: [], pre: true });
+    if (pc != null) pc += (Number(i.length) || 0) * 1000;
+  });
   var groups = [], g = null;
   items.forEach(function(it){
     if (it.type === "header") { g = { header: it, items: [] }; groups.push(g); return; }
@@ -526,6 +550,12 @@ function mapPco(d){
   var out = [];
   groups.forEach(function(g){
     var songs = g.items.filter(function(i){ return i.type === "song"; });
+    var tail = [];
+    if (songs.length) {
+      // Non-song items after the last song (e.g. a sermon) become their own entries.
+      var lastSong = g.items.lastIndexOf(songs[songs.length - 1]);
+      tail = g.items.slice(lastSong + 1); g.items = g.items.slice(0, lastSong + 1);
+    }
     if (songs.length) {
       var dur = 0; g.items.forEach(function(i){ dur += Number(i.length) || 0; });
       out.push({
@@ -536,7 +566,8 @@ function mapPco(d){
         songs: songs.map(function(s){ var p = splitLead(s.title); return { t: p[0], key: s.key || "", lead: p[1], note: String(s.description || "").trim() }; })
       });
       if (cursor != null) cursor += dur * 1000;
-      return;
+      if (!tail.length) return;
+      g = { header: null, items: tail };
     }
     g.items.forEach(function(i){
       var len = Number(i.length) || 0, t = cleanT(i.title);
@@ -549,11 +580,12 @@ function mapPco(d){
       if (cursor != null) cursor += len * 1000;
     });
   });
-  return normalize({ items: out }).items;
+  return normalize({ items: preOut.concat(out) }).items;
 }
 function hashStr(s){ var h1 = 5381, h2 = 52711; for (var i = 0; i < s.length; i++) { var c = s.charCodeAt(i); h1 = (h1 * 33) ^ c; h2 = (h2 * 33) ^ c; } return (h1 >>> 0).toString(36) + (h2 >>> 0).toString(36); }
-function applyPco(items, hash){
+function applyPco(items, hash, plan){
   commit(function(s){
+    if (eventPlanId() && plan) s.settings.eventName = str(cleanT(plan.title || "") || [plan.serviceType, String(plan.dates || "").replace(/^(\w{3})\w*\s(\d+).*$/, "$1 $2")].filter(Boolean).join(" · ") || "Event", 40);
     var old = cur(s);
     s.items = clone(items);
     var nw = cur(s);
@@ -577,7 +609,7 @@ function pcoGet(path, cred){
     }, function(){ throw { msg: "Can’t reach Planning Center directly from this browser (blocked or offline). Use the Cloudflare link instead.", net: true }; });
 }
 function fetchDirect(cred){
-  var base = "/service_types/" + state.settings.pcoSt + "/plans/" + state.settings.pcoPlan;
+  var base = "/service_types/" + state.settings.pcoSt + "/plans/" + roomPlan();
   return Promise.all([pcoGet(base + "/items?per_page=100", cred), pcoGet(base + "/plan_times?per_page=25", cred)]).then(function(r){
     var items = (r[0].data || []).map(function(d){
       var a = d.attributes || {};
@@ -603,6 +635,9 @@ function resolvePlan(planId, cred){
   });
 }
 function workerUrl(){ return state.settings.pcoUrl || PCO_WORKER_URL; }
+// Rooms made from the event list look like "p<planId>-<code>" and follow that Planning Center event.
+function eventPlanId(){ var m = ROOM && ROOM.match(/^p(\d{1,12})-[a-z0-9]+$/); return m ? m[1] : null; }
+function roomPlan(){ return eventPlanId() || state.settings.pcoPlan; }
 function pcoMode(){ return getCred() ? "direct" : (workerUrl() ? "worker" : ""); }
 function pcoCheck(manual){
   var mode = pcoMode();
@@ -611,7 +646,7 @@ function pcoCheck(manual){
   pcoBusy = true;
   if (manual) { pcoStatus = { state: "busy", text: "Checking Planning Center …", at: Date.now() }; renderPco(); }
   var job = mode === "direct" ? fetchDirect(getCred())
-    : fetch(workerUrl(), { cache: "no-store" }).then(function(r){
+    : fetch(workerUrl() + (workerUrl().indexOf("?") >= 0 ? "&" : "?") + "plan=" + encodeURIComponent(roomPlan()), { cache: "no-store" }).then(function(r){
         return r.json().then(function(j){ if (!r.ok || j.error) throw { msg: j.error || "Planning Center sync failed" }; return j; });
       }, function(){ throw { msg: "Can’t reach the Cloudflare link" }; });
   job.then(function(data){
@@ -623,7 +658,7 @@ function pcoCheck(manual){
     if (hash === state.pco.hash) { pcoPending = null; renderPco(); return; }
     var liveGone = state.currentId && state.currentId !== "__end" && !items.some(function(i){ return i.id === state.currentId; });
     if (liveGone) { if (view === "control") { pcoPending = { items: items, hash: hash }; renderPco(); } return; }
-    applyPco(items, hash);
+    applyPco(items, hash, data.plan);
     if (view === "control") toast("Updated from Planning Center");
     renderPco();
   }).catch(function(e){
@@ -703,12 +738,13 @@ function base(){ return location.href.split("#")[0]; }
 function homeHTML(){
   var last = store("sc-last-room");
   var h = '<div class="home"><div class="home-inner">' +
-    '<div class="eyebrow">Stage Clock</div><h1>Agape Night</h1>' +
-    '<p class="lead">A live stage clock. Open the <b>Stage</b> link on the screen by the stage and the <b>Control</b> link on your phone. No login needed.</p>';
+    '<div class="eyebrow">Message · Planning Center</div><h1>Stage Clock</h1>' +
+    '<p class="lead">Pick an event from Planning Center, then open the <b>Stage</b> link on the screen by the stage and the <b>Control</b> link on your phone. No login needed.</p>' +
+    '<div class="room"><div class="row-head" style="margin:0 0 4px"><h2 style="font-size:15px">Events from Planning Center</h2><button class="mini" id="evReload">↻</button></div><div id="evList"><p class="hint">Loading events …</p></div></div>';
   if (last) {
     var st = base() + "#stage/" + last, ct = base() + "#control/" + last;
     h += '<div class="room">' +
-      '<div class="room-code">Room code: <b>' + esc(last) + '</b></div>' +
+      '<div class="room-code">' + (store("sc-last-name") ? '<b style="font-size:17px">' + esc(store("sc-last-name")) + '</b><br>' : '') + 'Room code: ' + esc(last) + '</div>' +
       '<div class="linkrow" style="margin-top:6px"><div class="ic">🖥️</div><div class="tx"><b>Stage display</b><span>Screen by the stage</span></div>' +
         '<button class="mini" data-copy="' + esc(st) + '">Copy link</button><a class="mini pri" href="#stage/' + esc(last) + '" style="text-decoration:none">Open</a></div>' +
       '<div class="linkrow"><div class="ic">🎛️</div><div class="tx"><b>Control</b><span>Your phone</span></div>' +
@@ -719,11 +755,11 @@ function homeHTML(){
     '</div>';
   }
   h += '<div class="room">' +
-      '<div class="row-head" style="margin:0"><h2 style="font-size:15px">' + (last ? "Other room" : "Get started") + '</h2></div>' +
+      '<div class="row-head" style="margin:0"><h2 style="font-size:15px">Room without Planning Center</h2></div>' +
       '<button class="btn primary" id="newRoom" style="width:100%;margin-top:10px">Create new room</button>' +
       '<div class="join"><input class="input" id="joinCode" placeholder="Enter room code" autocomplete="off" autocapitalize="off"><button class="btn" id="joinBtn" style="padding:12px 16px">Join</button></div>' +
     '</div>' +
-    '<div class="note">Keep the links private – anyone with a link can see (and the Control link can change) the clock. A new room starts with the Agape Night run sheet and setlist.</div>' +
+    '<div class="note">Keep the links private – anyone with a link can see (and the Control link can change) the clock. Event rooms follow Planning Center automatically.</div>' +
   '</div></div>';
   return h;
 }
@@ -738,10 +774,37 @@ function bindHome(){
       else toast(t);
     });
   });
-  $("newRoom").addEventListener("click", function(){ store("sc-last-room", "agape-" + rnd(10)); route(); });
-  function join(){ var v = $("joinCode").value.trim(); if (/^[A-Za-z0-9_-]{4,64}$/.test(v)) { store("sc-last-room", v); route(); } else toast("That code doesn’t look right"); }
+  $("newRoom").addEventListener("click", function(){ store("sc-last-room", "agape-" + rnd(10)); store("sc-last-name", ""); route(); });
+  loadEvents(false);
+  $("evReload").addEventListener("click", function(){ loadEvents(true); });
+  function join(){ var v = $("joinCode").value.trim(); if (/^[A-Za-z0-9_-]{4,64}$/.test(v)) { store("sc-last-room", v); store("sc-last-name", ""); route(); } else toast("That code doesn’t look right"); }
   $("joinBtn").addEventListener("click", join);
   $("joinCode").addEventListener("keydown", function(e){ if (e.key === "Enter") join(); });
+}
+
+function evName(e){ return cleanT(e.title || "") || e.serviceType || "Event"; }
+function renderEvents(list){
+  var box = $("evList"); if (!box) return;
+  if (!list.length) { box.innerHTML = '<p class="hint">No upcoming events found.</p>'; return; }
+  var last = store("sc-last-room");
+  box.innerHTML = list.map(function(e){
+    return '<button class="ev' + (e.room === last ? " sel" : "") + '" data-room="' + esc(e.room) + '" data-name="' + esc(evName(e)) + '"><div class="go">' + (e.room === last ? "✓" : "▶") + '</div><div style="flex:1;min-width:0"><b>' + esc(evName(e)) + '</b><span>' + esc([e.dates, e.serviceType].filter(Boolean).join(" · ")) + '</span></div></button>';
+  }).join("");
+  box.querySelectorAll("[data-room]").forEach(function(b){
+    b.addEventListener("click", function(){ store("sc-last-room", b.getAttribute("data-room")); store("sc-last-name", b.getAttribute("data-name")); route(); window.scrollTo(0, 0); });
+  });
+}
+function loadEvents(manual){
+  var cached = store("sc-events");
+  if (cached && !manual) { try { renderEvents(JSON.parse(cached)); } catch(e){} }
+  fetch(PCO_WORKER_URL.replace(/\/+$/, "") + "/plans", { cache: "no-store" }).then(function(r){ return r.json(); }).then(function(j){
+    if (!j || !Array.isArray(j.plans)) throw 0;
+    store("sc-events", JSON.stringify(j.plans));
+    renderEvents(j.plans);
+  }).catch(function(){
+    var box = $("evList");
+    if (box && !cached) box.innerHTML = '<p class="hint">Couldn’t load events from Planning Center.</p>';
+  });
 }
 
 /* ============================================================
@@ -923,7 +986,7 @@ function controlHTML(){
       '<div class="set-row"><span>Show “Next”</span><label class="sw"><input type="checkbox" id="sNext"><i></i></label></div>' +
       '<div class="set-row"><span>Blackout screen</span><label class="sw"><input type="checkbox" id="sBlank"><i></i></label></div>' +
       '<p class="hint">Green = plenty of time, orange = wrap up soon, red + flashing = overtime (counts up).</p>' +
-      '<button class="btn danger" id="resetAll" style="width:100%;margin-top:12px">Reset to Agape Night run sheet</button>' +
+      '<button class="btn danger" id="resetAll" style="width:100%;margin-top:12px">Reset run sheet</button>' +
     '</section>' +
     '<section class="card">' +
       '<h2 style="margin-bottom:6px">Planning Center</h2>' +
@@ -1122,8 +1185,8 @@ function bindControl(){
     $(p[0]).addEventListener("change", function(){ var v = this.checked; commit(function(s){ s.settings[p[1]] = v; }); });
   });
   $("resetAll").addEventListener("click", function(){
-    confirmBox("Replace the whole run sheet with the original Agape Night run sheet and setlist? Your changes will be lost.", function(){
-      commit(function(s){ var n = clone(DEFAULT); n.items = clone(DEFAULT_ITEMS); n.settings = s.settings; Object.keys(n).forEach(function(k){ s[k] = n[k]; }); });
+    confirmBox("Reset the run sheet? Everything is reloaded from Planning Center and the clock stops. Your changes will be lost.", function(){
+      commit(function(s){ var n = clone(DEFAULT); n.items = eventPlanId() ? [] : clone(DEFAULT_ITEMS); n.settings = s.settings; Object.keys(n).forEach(function(k){ s[k] = n[k]; }); });
       if (pcoMode()) setTimeout(function(){ pcoCheck(true); }, 300);
     });
   });
@@ -1171,16 +1234,24 @@ function renderList(){
   var total = 0; items.forEach(function(i){ total += i.dur; });
   $("cTotal").textContent = "Total " + durTxt(total);
   var t = Date.now(); if (ci >= 0) t += Math.max(0, remainingMs());
+  var hasPre = items.some(function(i){ return i.pre; }), firstMain = -1;
+  for (var q = 0; q < items.length; q++) if (!items[q].pre) { firstMain = q; break; }
   list.innerHTML = items.map(function(it, idx){
+    var sep = "";
+    if (hasPre && idx === 0 && it.pre) sep = '<li class="sep">Setup & soundcheck</li>';
+    if (hasPre && idx === firstMain) sep = '<li class="sep">Event</li>';
+    return sep + rowHtml(it, idx);
+  }).join("");
+  function rowHtml(it, idx){
     var cls = "item", when;
     if (idx === ci) { cls += " is-live"; when = "live"; }
     else if ((ci >= 0 && idx < ci) || state.currentId === "__end") { cls += " done"; when = it.at ? atTxt(it.at) : ""; }
-    else { when = it.at ? atTxt(it.at) + " (~" + clockTxt(new Date(t)) + ")" : "~" + clockTxt(new Date(t)); t += it.dur*1000; }
+    else { when = ci >= 0 ? (it.at ? atTxt(it.at) + " (~" + clockTxt(new Date(t)) + ")" : "~" + clockTxt(new Date(t))) : atTxt(it.at); t += it.dur*1000; }
     var meta = [when, it.who, durTxt(it.dur), it.songs.length ? it.songs.length + " songs" : ""].filter(Boolean).join(" · ");
     return '<li class="' + cls + '"><button class="go" data-go="' + it.id + '" aria-label="Go live">▶</button>' +
       '<div class="it-body" data-edit="' + it.id + '"><div class="it-title">' + (idx+1) + '. ' + esc(it.title) + '</div><div class="it-meta">' + esc(meta) + '</div></div>' +
       '<div class="mv"><button data-up="' + it.id + '" aria-label="Move up">▲</button><button data-down="' + it.id + '" aria-label="Move down">▼</button></div></li>';
-  }).join("");
+  }
 }
 function renderSched(){
   var el = $("cSched"); if (!el) return;
