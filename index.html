@@ -252,29 +252,33 @@ var BROKERS = [
 ];
 var TOPIC_PREFIX = "agape-stageclock/v2/";
 
+// Cloudflare Worker that reads the Agape Night plan from Planning Center (used when no other link is set).
+var PCO_WORKER_URL = "https://agape-pco.mika-shortfilms.workers.dev";
+
 // The run sheet a brand-new room starts with.
 var DEFAULT_ITEMS = [
-  { id:"a1",  title:"Countdown Intro",        who:"Production Crew", dur:180,  at:"19:05", songs:[] },
-  { id:"a2",  title:"Opening the Night",      who:"Paaniz & Mika",   dur:240,  at:"19:08", songs:[] },
+  // Imported from Planning Center (General Worship · plan 93180450) on 14 Nov 2026
+  { id:"a1",  title:"Countdown Video",        who:"Production Crew", dur:180,  at:"19:05", songs:[] },
+  { id:"a2",  title:"Opening the Night",      who:"Paaniz + Mika",   dur:240,  at:"19:08", songs:[] },
   { id:"a3",  title:"Intro Video",            who:"Production Crew", dur:180,  at:"19:12", songs:[] },
   { id:"a4",  title:"Worship Set 1",          who:"Worship Team 1",  dur:2100, at:"19:15", songs:[
       {t:"I Thank God", key:"G", lead:"Calebe"},
       {t:"Praise", key:"E", lead:"Victor"},
       {t:"Amazing", key:"G", lead:"Calebe"},
-      {t:"Eyes of My Heart", key:"G#", lead:"Kavita"},
+      {t:"Eyes Of My Heart", key:"Ab", lead:"Kavita"},
       {t:"Build My Life", key:"D", lead:"Steffi"} ] },
-  { id:"a5",  title:"Message 1",              who:"Katy",            dur:600,  at:"19:50", songs:[] },
+  { id:"a5",  title:"Message 1",              who:"",                dur:600,  at:"19:50", songs:[] },
   { id:"a6",  title:"Worship Set 2",          who:"Worship Team 1",  dur:2100, at:"20:00", songs:[
       {t:"God I'm Just Grateful", key:"D", lead:"Calebe"},
       {t:"All Hail King Jesus", key:"C", lead:"Zaira"},
       {t:"Great Are You Lord", key:"D", lead:"Zaira"},
       {t:"Here As In Heaven", key:"C#", lead:"Victor", note:"1 chorus in Portuguese (Victor, Calebe, Zaira)"},
-      {t:"Touch of Heaven", key:"C#", lead:"Victor"} ] },
+      {t:"Touch Of Heaven", key:"C#", lead:"Victor"} ] },
   { id:"a7",  title:"Message 2 & Altar Call", who:"Daniel",          dur:1200, at:"20:35", songs:[] },
   { id:"a8",  title:"Worship Set 3",          who:"Worship Team 2",  dur:2100, at:"20:55", songs:[
       {t:"How He Loves", key:"F", lead:"Josh W.", note:"Only Josh, Noah, Steffi"},
       {t:"Beautiful Name", key:"G", lead:"Josh W."},
-      {t:"Who Else", key:"G#", lead:"Steffi", note:"1 chorus in German (Mika)"},
+      {t:"Who Else", key:"Ab", lead:"Steffi", note:"1 chorus in German (Mika)"},
       {t:"Our Father", key:"G", lead:"Josh W."},
       {t:"Yeshua", key:"G", lead:"Josh W."},
       {t:"Rest On Us", key:"G", lead:"Josh W."},
@@ -283,15 +287,16 @@ var DEFAULT_ITEMS = [
       {t:"Washed", key:"G", lead:"Mika"},
       {t:"I Thank God", key:"E", lead:"Tallie"},
       {t:"Amazing", key:"G", lead:"Tallie, Josh W."},
-      {t:"Goodbye Yesterday", key:"G", lead:"Mika"} ] },
-  { id:"a10", title:"Closing the Night",      who:"Paaniz & Mika",   dur:300,  at:"21:50", songs:[] }
+      {t:"Goodbye", key:"G", lead:"Mika"} ] },
+  { id:"a10", title:"Closing the Night",      who:"Paaniz + Mika",   dur:300,  at:"21:50", songs:[] }
 ];
 
 /* ============================================================ */
 var DEFAULT = {
   items: [], currentId: null, songIdx: 0, running: false, endsAt: 0, remaining: 0,
   message: null,
-  settings: { eventName: "Agape Night", warnSec: 120, showClock: true, showNext: true, showSongs: true, blank: false, endAt: "" },
+  settings: { eventName: "Agape Night", warnSec: 120, showClock: true, showNext: true, showSongs: true, blank: false, endAt: "", pcoUrl: "", pcoAuto: true, pcoSt: "782160", pcoPlan: "93180450" },
+  pco: { hash: "", syncedAt: 0 },
   updatedAt: 0
 };
 var state = clone(DEFAULT);
@@ -320,6 +325,11 @@ function normalize(d){
   });
   s.songIdx = Math.max(0, Number(s.songIdx) || 0);
   if (!/^\d{2}:\d{2}$/.test(s.settings.endAt || "")) s.settings.endAt = "";
+  if (!/^https:\/\/[^\s"<>]{4,300}$/.test(s.settings.pcoUrl || "")) s.settings.pcoUrl = "";
+  s.settings.pcoAuto = s.settings.pcoAuto !== false;
+  if (!/^\d{1,12}$/.test(s.settings.pcoSt || "")) s.settings.pcoSt = DEFAULT.settings.pcoSt;
+  if (!/^\d{1,12}$/.test(s.settings.pcoPlan || "")) s.settings.pcoPlan = DEFAULT.settings.pcoPlan;
+  s.pco = { hash: str(s.pco && s.pco.hash, 64), syncedAt: Number(s.pco && s.pco.syncedAt) || 0 };
   if (s.message && typeof s.message.text !== "string") s.message = null;
   return s;
 }
@@ -428,6 +438,7 @@ function connect(){
           // The controller keeps every server up to date with the newest state.
           if (view === "control" && state.updatedAt > 0) publishTo(c);
           fill();
+          setTimeout(function(){ pcoCheck(false); }, 800);
         }, 1200);
       });
     });
@@ -476,6 +487,173 @@ function apply(d){
   state = s;
   if (view === "control") store("sc-backup-" + ROOM, JSON.stringify(state));
   fill();
+}
+
+/* ============================================================
+   PLANNING CENTER SYNC
+   The Cloudflare Worker (worker.js) returns the plan; this turns it into the run sheet.
+   Rules: a header with songs = one worship set; every other item = its own entry.
+   "Who // Title" in an item title is split into who + title. A header with exactly
+   one item uses the header as title and the item as "who" (e.g. Message 2 / Daniel).
+   Items called "Wait …" and zero-length items are skipped (but count for the times).
+   ============================================================ */
+var pcoStatus = { state: "", text: "", at: 0 }, pcoPending = null, pcoBusy = false;
+var SMALL = { a:1, an:1, and:1, as:1, at:1, "in":1, of:1, on:1, the:1, to:1, "for":1 };
+function tcase(t){
+  return String(t || "").replace(/\s+/g, " ").trim().toLowerCase().split(" ").map(function(w, i){
+    if (i > 0 && SMALL[w]) return w;
+    return w.replace(/^([^a-z]*)([a-z])/, function(m, a, b){ return a + b.toUpperCase(); });
+  }).join(" ");
+}
+function cleanT(t){ t = String(t || "").replace(/\s+/g, " ").trim(); return (t.length > 3 && t === t.toUpperCase() && /[A-Z]/.test(t)) ? tcase(t) : t; }
+function hm(ms){ if (ms == null) return ""; var d = new Date(ms); return pad(d.getHours()) + ":" + pad(d.getMinutes()); }
+function splitLead(t){
+  t = String(t || "").trim(); var i = t.lastIndexOf(" - ");
+  return i > 0 ? [cleanT(t.slice(0, i)), t.slice(i + 3).trim()] : [cleanT(t), ""];
+}
+function mapPco(d){
+  var items = (d && Array.isArray(d.items) ? d.items : []).slice().sort(function(a, b){ return a.sequence - b.sequence; });
+  var svc = (d.times || []).filter(function(t){ return t.type === "service"; })
+    .map(function(t){ return new Date(t.startsAt).getTime(); }).filter(function(x){ return !isNaN(x); }).sort(function(a, b){ return a - b; })[0];
+  var cursor = svc == null ? null : svc;
+  var groups = [], g = null;
+  items.forEach(function(it){
+    if (it.type === "header") { g = { header: it, items: [] }; groups.push(g); return; }
+    if (it.position && it.position !== "during") return;
+    if (!g) { g = { header: null, items: [] }; groups.push(g); }
+    g.items.push(it);
+  });
+  var out = [];
+  groups.forEach(function(g){
+    var songs = g.items.filter(function(i){ return i.type === "song"; });
+    if (songs.length) {
+      var dur = 0; g.items.forEach(function(i){ dur += Number(i.length) || 0; });
+      out.push({
+        id: "pco" + (g.header ? g.header.id : g.items[0].id),
+        title: g.header ? tcase(g.header.title) : "Worship",
+        who: g.header && g.header.description ? str(g.header.description.trim(), 80) : "",
+        dur: dur, at: hm(cursor),
+        songs: songs.map(function(s){ var p = splitLead(s.title); return { t: p[0], key: s.key || "", lead: p[1], note: String(s.description || "").trim() }; })
+      });
+      if (cursor != null) cursor += dur * 1000;
+      return;
+    }
+    g.items.forEach(function(i){
+      var len = Number(i.length) || 0, t = cleanT(i.title);
+      if (len > 0 && !/^wait\b/i.test(t)) {
+        var title = t, who = "";
+        if (t.indexOf("//") >= 0) { var pp = t.split("//"); who = pp[0].trim(); title = pp.slice(1).join("//").trim(); }
+        else if (g.header && g.items.length === 1) { title = tcase(g.header.title); who = /^[?\s]+$/.test(t) ? "" : t; }
+        out.push({ id: "pco" + i.id, title: title || "Untitled", who: who, dur: len, at: hm(cursor), songs: [] });
+      }
+      if (cursor != null) cursor += len * 1000;
+    });
+  });
+  return normalize({ items: out }).items;
+}
+function hashStr(s){ var h1 = 5381, h2 = 52711; for (var i = 0; i < s.length; i++) { var c = s.charCodeAt(i); h1 = (h1 * 33) ^ c; h2 = (h2 * 33) ^ c; } return (h1 >>> 0).toString(36) + (h2 >>> 0).toString(36); }
+function applyPco(items, hash){
+  commit(function(s){
+    var old = cur(s);
+    s.items = clone(items);
+    var nw = cur(s);
+    if (old && nw && nw.dur !== old.dur) { var diff = (nw.dur - old.dur) * 1000; if (s.running) s.endsAt += diff; else s.remaining += diff; }
+    if (nw) s.songIdx = Math.min(s.songIdx, Math.max(0, nw.songs.length - 1));
+    s.pco = { hash: hash, syncedAt: Date.now() };
+  });
+  pcoPending = null;
+}
+// Direct access: the Planning Center token is kept ONLY in this browser (never synced, never on GitHub).
+var PCO_API = "https://api.planningcenteronline.com/services/v2";
+function getCred(){ try { var c = JSON.parse(store("sc-pco-cred") || "null"); return c && c.id && c.secret ? c : null; } catch(e){ return null; } }
+function setCred(c){ try { if (c) localStorage.setItem("sc-pco-cred", JSON.stringify(c)); else localStorage.removeItem("sc-pco-cred"); } catch(e){} }
+function pcoGet(path, cred){
+  return fetch(PCO_API + path, { headers: { Authorization: "Basic " + btoa(cred.id + ":" + cred.secret) }, cache: "no-store" })
+    .then(function(r){
+      if (r.status === 401) throw { msg: "Planning Center rejected the token – check Application ID and Secret." };
+      if (r.status === 404) throw { msg: "Plan not found – check the plan link.", notFound: true };
+      if (!r.ok) throw { msg: "Planning Center error " + r.status };
+      return r.json();
+    }, function(){ throw { msg: "Can’t reach Planning Center directly from this browser (blocked or offline). Use the Cloudflare link instead.", net: true }; });
+}
+function fetchDirect(cred){
+  var base = "/service_types/" + state.settings.pcoSt + "/plans/" + state.settings.pcoPlan;
+  return Promise.all([pcoGet(base + "/items?per_page=100", cred), pcoGet(base + "/plan_times?per_page=25", cred)]).then(function(r){
+    var items = (r[0].data || []).map(function(d){
+      var a = d.attributes || {};
+      return { id: d.id, title: a.title || "", type: a.item_type, length: a.length || 0, key: a.key_name || "",
+        description: (a.item_type === "song" || a.item_type === "header") ? (a.description || "") : "",
+        position: a.service_position, sequence: a.sequence };
+    }).filter(function(i){ return i.type === "header" || i.length > 0; });
+    var times = (r[1].data || []).map(function(t){ return { type: t.attributes.time_type, startsAt: t.attributes.starts_at }; });
+    return { items: items, times: times };
+  });
+}
+// Find which service type a plan belongs to (needed by the API).
+function resolvePlan(planId, cred){
+  return pcoGet("/service_types?per_page=100", cred).then(function(r){
+    var ids = (r.data || []).map(function(d){ return d.id; });
+    var i = 0;
+    function next(){
+      if (i >= ids.length) throw { msg: "Couldn’t find that plan in your Planning Center." };
+      var st = ids[i++];
+      return pcoGet("/service_types/" + st + "/plans/" + planId, cred).then(function(){ return st; }, function(e){ if (e && e.notFound) return next(); throw e; });
+    }
+    return next();
+  });
+}
+function workerUrl(){ return state.settings.pcoUrl || PCO_WORKER_URL; }
+function pcoMode(){ return getCred() ? "direct" : (workerUrl() ? "worker" : ""); }
+function pcoCheck(manual){
+  var mode = pcoMode();
+  if (!mode || !synced || pcoBusy || !ROOM) return;
+  if (!manual && (!state.settings.pcoAuto || (view !== "control" && view !== "stage"))) return;
+  pcoBusy = true;
+  if (manual) { pcoStatus = { state: "busy", text: "Checking Planning Center …", at: Date.now() }; renderPco(); }
+  var job = mode === "direct" ? fetchDirect(getCred())
+    : fetch(workerUrl(), { cache: "no-store" }).then(function(r){
+        return r.json().then(function(j){ if (!r.ok || j.error) throw { msg: j.error || "Planning Center sync failed" }; return j; });
+      }, function(){ throw { msg: "Can’t reach the Cloudflare link" }; });
+  job.then(function(data){
+    pcoBusy = false;
+    var items = mapPco(data);
+    if (!items.length) { pcoStatus = { state: "err", text: "The Planning Center plan has no items for the night", at: Date.now() }; renderPco(); return; }
+    var hash = hashStr(JSON.stringify(items));
+    pcoStatus = { state: "ok", text: "", at: Date.now() };
+    if (hash === state.pco.hash) { pcoPending = null; renderPco(); return; }
+    var liveGone = state.currentId && state.currentId !== "__end" && !items.some(function(i){ return i.id === state.currentId; });
+    if (liveGone) { if (view === "control") { pcoPending = { items: items, hash: hash }; renderPco(); } return; }
+    applyPco(items, hash);
+    if (view === "control") toast("Updated from Planning Center");
+    renderPco();
+  }).catch(function(e){
+    pcoBusy = false;
+    pcoStatus = { state: "err", text: (e && e.msg) || "Planning Center sync failed", at: Date.now() };
+    renderPco();
+  });
+}
+setInterval(function(){ pcoCheck(false); }, 60000);
+function renderPco(){
+  var el = $("pcoStatus");
+  if (el) {
+    var s = state.settings, t;
+    var mode = pcoMode();
+    if (!mode) t = "Not connected on this device yet.";
+    else if (pcoStatus.state === "busy") t = pcoStatus.text;
+    else if (pcoStatus.state === "err") t = "⚠ " + pcoStatus.text;
+    else if (state.pco.syncedAt) t = "✓ In sync (" + (mode === "direct" ? "direct" : "Cloudflare") + ") · last change applied " + clockTxt(new Date(state.pco.syncedAt)) + (pcoStatus.at ? " · checked " + clockTxt(new Date(pcoStatus.at)) : "");
+    else t = s.pcoAuto ? "Waiting for first sync …" : "Auto-sync is off";
+    el.textContent = t;
+    el.style.color = pcoStatus.state === "err" ? "var(--warn)" : "";
+  }
+  var b = $("cPco");
+  if (b) {
+    if (pcoPending && view === "control") {
+      b.hidden = false;
+      b.innerHTML = '<h3>Planning Center changed</h3><p>The item that is live right now isn’t in the new Planning Center plan any more. Apply the new run sheet anyway? (The live item will stop.)</p>' +
+        '<div class="row"><button class="btn" data-pco="no">Not now</button><button class="btn primary" data-pco="yes">Apply</button></div>';
+    } else b.hidden = true;
+  }
 }
 
 /* ============================================================
@@ -717,6 +895,7 @@ function controlHTML(){
         '<button class="btn" data-act="plus">+1 min</button>' +
       '</div>' +
     '</section>' +
+    '<section class="catch" id="cPco" hidden></section>' +
     '<section class="catch" id="cCatch" hidden></section>' +
     '<section class="card" id="cSetCard" hidden>' +
       '<div class="row-head"><h2>Setlist</h2><div style="display:flex;gap:6px"><button class="mini" data-act="songPrev">◀ Song</button><button class="mini pri" data-act="songNext">Next song ▶</button></div></div>' +
@@ -745,6 +924,21 @@ function controlHTML(){
       '<div class="set-row"><span>Blackout screen</span><label class="sw"><input type="checkbox" id="sBlank"><i></i></label></div>' +
       '<p class="hint">Green = plenty of time, orange = wrap up soon, red + flashing = overtime (counts up).</p>' +
       '<button class="btn danger" id="resetAll" style="width:100%;margin-top:12px">Reset to Agape Night run sheet</button>' +
+    '</section>' +
+    '<section class="card">' +
+      '<h2 style="margin-bottom:6px">Planning Center</h2>' +
+      '<div class="set-row"><span>Auto-sync every minute</span><label class="sw"><input type="checkbox" id="sPcoAuto"><i></i></label></div>' +
+      '<p class="hint" id="pcoStatus"></p>' +
+      '<button class="btn" id="pcoNow" style="width:100%;margin-top:12px">Sync now</button>' +
+      '<p class="hint">Changes in Planning Center replace the run sheet here within a minute (the live item keeps running). Edits you make here stay until the next change in Planning Center.</p>' +
+      '<details style="margin-top:12px"><summary class="hint" style="cursor:pointer">Advanced</summary>' +
+        '<div class="set-row" style="flex-direction:column;align-items:stretch;gap:8px"><span>Cloudflare link</span><input class="input" id="sPco" placeholder="' + PCO_WORKER_URL + '" autocomplete="off" autocapitalize="off" style="width:100%"></div>' +
+        '<div class="set-row" style="flex-direction:column;align-items:stretch;gap:8px"><span>Plan link <small style="color:var(--muted)">(only for the token below)</small></span><input class="input" id="sPlan" autocomplete="off" autocapitalize="off" style="width:100%"></div>' +
+        '<div class="set-row" style="flex-direction:column;align-items:stretch;gap:8px"><span>Token on this device instead of Cloudflare</span>' +
+          '<div id="credForm"><input class="input" id="cId" placeholder="Application ID" autocomplete="off" autocapitalize="off" style="width:100%;margin-bottom:8px"><input class="input" id="cSecret" type="password" placeholder="Secret" autocomplete="off" style="width:100%"><button class="btn" id="credSave" style="width:100%;margin-top:8px">Save token on this device</button></div>' +
+          '<div id="credSet" hidden style="display:flex;align-items:center;gap:10px"><span style="flex:1;color:var(--ok);font-weight:700">✓ Token saved on this device</span><button class="mini" id="credDel">Remove</button></div>' +
+        '</div>' +
+      '</details>' +
     '</section>' +
   '</div>' +
   '<div class="sheet-bg" id="sheetBg" hidden><form class="sheet" id="sheet">' +
@@ -881,6 +1075,39 @@ function bindControl(){
     });
   });
   $("sName").addEventListener("change", function(){ var v = this.value.trim() || "Agape Night"; commit(function(s){ s.settings.eventName = v.slice(0,40); }); });
+  $("sPco").addEventListener("change", function(){
+    var v = this.value.trim();
+    if (v && !/^https:\/\/[^\s"<>]{4,300}$/.test(v)) { toast("That link doesn’t look right"); return; }
+    commit(function(s){ s.settings.pcoUrl = v; s.pco = { hash: "", syncedAt: 0 }; });
+    if (v) setTimeout(function(){ pcoCheck(true); }, 300);
+  });
+  $("credSave").addEventListener("click", function(){
+    var id = $("cId").value.trim(), sec = $("cSecret").value.trim();
+    if (!id || !sec) { toast("Enter Application ID and Secret"); return; }
+    setCred({ id: id, secret: sec }); $("cId").value = ""; $("cSecret").value = "";
+    commit(function(s){ s.pco = { hash: "", syncedAt: 0 }; });
+    fillControl(); pcoCheck(true);
+  });
+  $("credDel").addEventListener("click", function(){ setCred(null); pcoStatus = { state: "", text: "", at: 0 }; fillControl(); toast("Token removed from this device"); });
+  $("sPlan").addEventListener("change", function(){
+    var m = this.value.match(/plans\/(\d+)/) || this.value.trim().match(/^(\d+)$/);
+    if (!m) { toast("Paste the plan link from Planning Center"); return; }
+    var plan = m[1], cred = getCred();
+    if (!cred) { toast("Connect this device first"); return; }
+    pcoStatus = { state: "busy", text: "Looking up the plan …", at: Date.now() }; renderPco();
+    resolvePlan(plan, cred).then(function(st){
+      commit(function(s){ s.settings.pcoSt = st; s.settings.pcoPlan = plan; s.pco = { hash: "", syncedAt: 0 }; });
+      pcoCheck(true);
+    }, function(e){ pcoStatus = { state: "err", text: (e && e.msg) || "Couldn’t find that plan", at: Date.now() }; renderPco(); });
+  });
+  $("sPcoAuto").addEventListener("change", function(){ var v = this.checked; commit(function(s){ s.settings.pcoAuto = v; }); });
+  $("pcoNow").addEventListener("click", function(){ if (!pcoMode()) { toast("Connect this device first"); return; } pcoCheck(true); });
+  $("cPco").addEventListener("click", function(e){
+    var b = e.target.closest("[data-pco]"); if (!b || !pcoPending) return;
+    if (b.getAttribute("data-pco") === "yes") { var pp = pcoPending; applyPco(pp.items, pp.hash); toast("Updated from Planning Center"); }
+    else { pcoPending = null; }
+    renderPco();
+  });
   $("sEnd").addEventListener("change", function(){ var v = /^\d{2}:\d{2}/.test(this.value) ? this.value.slice(0,5) : ""; commit(function(s){ s.settings.endAt = v; }); });
   $("cCatch").addEventListener("click", function(e){
     var b = e.target.closest("[data-catch]"); if (!b) return;
@@ -897,6 +1124,7 @@ function bindControl(){
   $("resetAll").addEventListener("click", function(){
     confirmBox("Replace the whole run sheet with the original Agape Night run sheet and setlist? Your changes will be lost.", function(){
       commit(function(s){ var n = clone(DEFAULT); n.items = clone(DEFAULT_ITEMS); n.settings = s.settings; Object.keys(n).forEach(function(k){ s[k] = n[k]; }); });
+      if (pcoMode()) setTimeout(function(){ pcoCheck(true); }, 300);
     });
   });
 }
@@ -927,6 +1155,12 @@ function fillControl(){
   setVal("sName", s.eventName);
   setVal("sWarn", +(s.warnSec/60).toFixed(1));
   setVal("sEnd", s.endAt || "");
+  setVal("sPco", s.pcoUrl || "");
+  setVal("sPlan", "https://services.planningcenteronline.com/plans/" + s.pcoPlan);
+  var hasCred = !!getCred();
+  $("credForm").hidden = hasCred; $("credSet").hidden = !hasCred;
+  $("sPcoAuto").checked = !!s.pcoAuto;
+  renderPco();
   $("sSongs").checked = !!s.showSongs; $("sClock").checked = !!s.showClock; $("sNext").checked = !!s.showNext; $("sBlank").checked = !!s.blank;
   renderList();
 }
