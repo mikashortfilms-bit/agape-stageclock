@@ -310,6 +310,9 @@ var DEFAULT = {
 };
 var state = clone(DEFAULT);
 var ROOM = null, view = "home";
+// Follow mode: Stage/Backstage opened without a room show whatever event the Control picked last.
+var FOLLOW = false, announce = null;
+var ACTIVE_TOPIC = "agape-stageclock/v2/active/message-main";
 var topic = null, conn = "idle", synced = false, gotState = false;
 
 function clone(o){ return JSON.parse(JSON.stringify(o)); }
@@ -422,12 +425,12 @@ function liveCount(){ return clients.filter(function(c){ return c.connected; }).
 function connect(){
   disconnect();
   synced = false; gotState = false;
-  if (!ROOM) return;
-  var backup = store("sc-backup-" + ROOM);
+  if (!ROOM && !FOLLOW) return;
+  var backup = ROOM ? store("sc-backup-" + ROOM) : null;
   state = clone(DEFAULT);
   if (backup && view === "control") { try { state = normalize(JSON.parse(backup)); } catch(e){} }
-  if (!window.mqtt) { conn = "off"; renderConn(); setTimeout(function(){ if (!clients.length && ROOM && view !== "home") connect(); }, 1500); return; }
-  topic = TOPIC_PREFIX + ROOM;
+  if (!window.mqtt) { conn = "off"; renderConn(); setTimeout(function(){ if (!clients.length && (ROOM || FOLLOW) && view !== "devices" && view !== "pick") connect(); }, 1500); return; }
+  topic = ROOM ? TOPIC_PREFIX + ROOM : null;
   conn = "connecting"; renderConn();
   BROKERS.forEach(function(url){
     var c;
@@ -435,6 +438,9 @@ function connect(){
     catch(e){ return; }
     clients.push(c);
     c.on("connect", function(){
+      if (FOLLOW) c.subscribe(ACTIVE_TOPIC, { qos: 1 });
+      if (view === "control" && announce && announce.room === ROOM) publishActive(c);
+      if (!topic) { c.scReady = true; synced = true; updateConn(); fill(); return; }
       c.subscribe(topic, { qos: 1 }, function(err){
         if (err) return;
         c.scReady = true;
@@ -460,13 +466,31 @@ function connect(){
     c.on("offline", function(){ c.scReady = false; updateConn(); });
     c.on("error", function(){ updateConn(); });
     c.on("message", function(t, payload){
-      if (t !== topic) return;
       var d; try { d = JSON.parse(new TextDecoder().decode(payload)); } catch(e){ return; }
+      if (t === ACTIVE_TOPIC) { onActive(d); return; }
+      if (t !== topic) return;
       gotState = true;
       apply(d);
     });
   });
   setTimeout(updateConn, 12000);
+}
+function publishActive(c){
+  if (!announce || !c.connected) return;
+  c.publish(ACTIVE_TOPIC, JSON.stringify({ room: announce.room, name: announce.name || "", at: announce.at }), { qos: 1, retain: true });
+}
+function showOnAllScreens(){
+  announce = { room: ROOM, name: state.settings.eventName, at: Date.now() };
+  clients.forEach(publishActive);
+}
+function onActive(d){
+  if (!FOLLOW || !d || !/^[A-Za-z0-9_-]{4,64}$/.test(d.room || "")) return;
+  var at = Number(d.at) || 0, lastAt = Number(store("sc-follow-at")) || 0;
+  if (at < lastAt) return;               // an older message from another server
+  store("sc-follow-at", String(at));
+  if (d.room === ROOM) return;
+  ROOM = d.room; store("sc-follow-room", ROOM);
+  setTimeout(function(){ if (FOLLOW) { connect(); fill(); } }, 0);
 }
 function updateConn(){
   var n = clients.filter(function(c){ return c.scReady && c.connected; }).length;
@@ -525,6 +549,7 @@ function splitLead(t){
   t = String(t || "").trim(); var i = t.lastIndexOf(" - ");
   return i > 0 ? [cleanT(t.slice(0, i)), t.slice(i + 3).trim()] : [cleanT(t), ""];
 }
+function songOf(s){ var p = splitLead(s.title); return { t: p[0], key: s.key || "", lead: p[1], note: String(s.description || "").trim() }; }
 function mapPco(d){
   var items = (d && Array.isArray(d.items) ? d.items : []).slice().sort(function(a, b){ return a.sequence - b.sequence; });
   var svc = (d.times || []).filter(function(t){ return t.type === "service"; })
@@ -549,7 +574,7 @@ function mapPco(d){
   });
   var out = [];
   groups.forEach(function(g){
-    var songs = g.items.filter(function(i){ return i.type === "song"; });
+    var songs = g.items.filter(function(i){ return i.type === "song" && (Number(i.length) || 0) > 0; });
     var tail = [];
     if (songs.length) {
       // Non-song items after the last song (e.g. a sermon) become their own entries.
@@ -563,18 +588,21 @@ function mapPco(d){
         title: g.header ? tcase(g.header.title) : "Worship",
         who: g.header && g.header.description ? str(g.header.description.trim(), 80) : "",
         dur: dur, at: hm(cursor),
-        songs: songs.map(function(s){ var p = splitLead(s.title); return { t: p[0], key: s.key || "", lead: p[1], note: String(s.description || "").trim() }; })
+        songs: g.items.filter(function(i){ return i.type === "song"; }).map(songOf)
       });
       if (cursor != null) cursor += dur * 1000;
       if (!tail.length) return;
       g = { header: null, items: tail };
     }
+    var nonSongs = g.items.filter(function(i){ return i.type !== "song"; }).length;
     g.items.forEach(function(i){
       var len = Number(i.length) || 0, t = cleanT(i.title);
+      // A song without its own length belongs to the item before it (e.g. "Worship" → its songs).
+      if (i.type === "song" && len === 0) { if (out.length) out[out.length - 1].songs.push(songOf(i)); return; }
       if (len > 0 && !/^wait\b/i.test(t)) {
         var title = t, who = "";
         if (t.indexOf("//") >= 0) { var pp = t.split("//"); who = pp[0].trim(); title = pp.slice(1).join("//").trim(); }
-        else if (g.header && g.items.length === 1) { title = tcase(g.header.title); who = /^[?\s]+$/.test(t) ? "" : t; }
+        else if (g.header && nonSongs === 1) { title = tcase(g.header.title); who = /^[?\s]+$/.test(t) ? "" : t; }
         out.push({ id: "pco" + i.id, title: title || "Untitled", who: who, dur: len, at: hm(cursor), songs: [] });
       }
       if (cursor != null) cursor += len * 1000;
@@ -616,7 +644,7 @@ function fetchDirect(cred){
       return { id: d.id, title: a.title || "", type: a.item_type, length: a.length || 0, key: a.key_name || "",
         description: (a.item_type === "song" || a.item_type === "header") ? (a.description || "") : "",
         position: a.service_position, sequence: a.sequence };
-    }).filter(function(i){ return i.type === "header" || i.length > 0; });
+    }).filter(function(i){ return i.type === "header" || i.type === "song" || i.length > 0; });
     var times = (r[1].data || []).map(function(t){ return { type: t.attributes.time_type, startsAt: t.attributes.starts_at }; });
     return { items: items, times: times };
   });
@@ -696,22 +724,34 @@ function renderPco(){
    ============================================================ */
 function parseHash(){
   var h = location.hash.replace(/^#/, "");
-  var m = h.match(/^(stage|control|backstage)\/([A-Za-z0-9_-]{4,64})$/);
-  return m ? { view: m[1], room: m[2] } : { view: "home", room: null };
+  var m = h.match(/^(stage|control|backstage)(?:\/([A-Za-z0-9_-]{4,64}))?$/);
+  if (m) return { view: m[1], room: m[2] || null };
+  return { view: h === "devices" ? "devices" : "home", room: null };
 }
 function route(){
   var r = parseHash();
-  var roomChanged = r.room !== ROOM;
+  if (r.view === "home") {
+    var role = store("sc-role");
+    if (role === "stage" || role === "control" || role === "backstage") { location.replace("#" + role); return; }
+    r.view = "devices";
+  }
+  var prevRoom = ROOM, prevFollow = FOLLOW, prevView = view;
   view = r.view;
-  if (r.room) { ROOM = r.room; store("sc-last-room", ROOM); }
-  if (view === "home") { disconnect(); ROOM = null; }
+  FOLLOW = (view === "stage" || view === "backstage") && !r.room;
+  if (view === "control" && !r.room) view = "pick";
+  if (r.room) ROOM = r.room;
+  else if (FOLLOW) ROOM = (prevFollow && ROOM) || store("sc-follow-room") || null;
+  else ROOM = null;
+  if (view === "control") { store("sc-last-room", ROOM); }
   document.body.style.overflow = (view === "stage" || view === "backstage") ? "hidden" : "";
   var app = $("app");
-  if (view === "home") { app.innerHTML = homeHTML(); bindHome(); }
+  if (view === "devices") { app.innerHTML = devicesHTML(); bindDevices(); }
+  else if (view === "pick") { app.innerHTML = pickHTML(); bindPick(); }
   else if (view === "stage") { app.innerHTML = stageHTML(); bindStage(); }
-  else if (view === "backstage") { app.innerHTML = backstageHTML(); requestWake(); }
+  else if (view === "backstage") { app.innerHTML = backstageHTML(); bindBackstage(); }
   else { app.innerHTML = controlHTML(); bindControl(); }
-  if (view !== "home" && (roomChanged || !clients.length)) connect();
+  if (view === "devices" || view === "pick") { disconnect(); conn = "idle"; }
+  else if (ROOM !== prevRoom || FOLLOW !== prevFollow || prevView !== view || !clients.length) connect();
   fill();
 }
 window.addEventListener("hashchange", route);
@@ -735,51 +775,48 @@ function renderConn(){
    HOME
    ============================================================ */
 function base(){ return location.href.split("#")[0]; }
-function homeHTML(){
-  var last = store("sc-last-room");
-  var h = '<div class="home"><div class="home-inner">' +
+function devicesHTML(){
+  return '<div class="home"><div class="home-inner">' +
     '<div class="eyebrow">Message · Planning Center</div><h1>Stage Clock</h1>' +
-    '<p class="lead">Pick an event from Planning Center, then open the <b>Stage</b> link on the screen by the stage and the <b>Control</b> link on your phone. No login needed.</p>' +
-    '<div class="room"><div class="row-head" style="margin:0 0 4px"><h2 style="font-size:15px">Events from Planning Center</h2><button class="mini" id="evReload">↻</button></div><div id="evList"><p class="hint">Loading events …</p></div></div>';
-  if (last) {
-    var st = base() + "#stage/" + last, ct = base() + "#control/" + last;
-    h += '<div class="room">' +
-      '<div class="room-code">' + (store("sc-last-name") ? '<b style="font-size:17px">' + esc(store("sc-last-name")) + '</b><br>' : '') + 'Room code: ' + esc(last) + '</div>' +
-      '<div class="linkrow" style="margin-top:6px"><div class="ic">🖥️</div><div class="tx"><b>Stage display</b><span>Screen by the stage</span></div>' +
-        '<button class="mini" data-copy="' + esc(st) + '">Copy link</button><a class="mini pri" href="#stage/' + esc(last) + '" style="text-decoration:none">Open</a></div>' +
-      '<div class="linkrow"><div class="ic">🎛️</div><div class="tx"><b>Control</b><span>Your phone</span></div>' +
-        '<button class="mini" data-copy="' + esc(ct) + '">Copy link</button><a class="mini pri" href="#control/' + esc(last) + '" style="text-decoration:none">Open</a></div>' +
-      '<div class="linkrow"><div class="ic">🚪</div><div class="tx"><b>Backstage</b><span>Screen in the waiting area</span></div>' +
-        '<button class="mini" data-copy="' + esc(base() + "#backstage/" + last) + '">Copy link</button><a class="mini pri" href="#backstage/' + esc(last) + '" style="text-decoration:none">Open</a></div>' +
-      '<div class="qr"><div id="qrBox"></div><p>Scan with your phone to open <b>Control</b> for this room.</p></div>' +
-    '</div>';
-  }
-  h += '<div class="room">' +
-      '<div class="row-head" style="margin:0"><h2 style="font-size:15px">Room without Planning Center</h2></div>' +
-      '<button class="btn primary" id="newRoom" style="width:100%;margin-top:10px">Create new room</button>' +
-      '<div class="join"><input class="input" id="joinCode" placeholder="Enter room code" autocomplete="off" autocapitalize="off"><button class="btn" id="joinBtn" style="padding:12px 16px">Join</button></div>' +
-    '</div>' +
-    '<div class="note">Keep the links private – anyone with a link can see (and the Control link can change) the clock. Event rooms follow Planning Center automatically.</div>' +
+    '<p class="lead">What is this device? It remembers your choice.</p>' +
+    '<button class="choice" data-role="control"><div class="ic">🎛️</div><div><b>Control</b><span>Pick the event, run the timer, send messages. Usually your phone.</span></div></button>' +
+    '<button class="choice" data-role="stage"><div class="ic">🖥️</div><div><b>Stage display</b><span>Big countdown for the stage. Shows the event the Control picked.</span></div></button>' +
+    '<button class="choice" data-role="backstage"><div class="ic">🚪</div><div><b>Backstage</b><span>Who’s on next, for the waiting area. Follows the Control too.</span></div></button>' +
+    '<div class="note">Set up each screen once. After that, just pick the event on the Control – Stage and Backstage switch to it automatically.</div>' +
   '</div></div>';
-  return h;
 }
-function bindHome(){
-  var last = store("sc-last-room");
-  if (last && window.QRCode) { try { new QRCode($("qrBox"), { text: base() + "#control/" + last, width: 96, height: 96, correctLevel: QRCode.CorrectLevel.M }); } catch(e){ $("qrBox").parentNode.hidden = true; } }
-  else if ($("qrBox")) $("qrBox").parentNode.hidden = true;
-  document.querySelectorAll("[data-copy]").forEach(function(b){
-    b.addEventListener("click", function(){
-      var t = b.getAttribute("data-copy");
-      if (navigator.clipboard) navigator.clipboard.writeText(t).then(function(){ toast("Link copied"); }, function(){ toast(t); });
-      else toast(t);
-    });
+function bindDevices(){
+  document.querySelectorAll("[data-role]").forEach(function(b){
+    b.addEventListener("click", function(){ var r = b.getAttribute("data-role"); store("sc-role", r); location.hash = r; });
   });
-  $("newRoom").addEventListener("click", function(){ store("sc-last-room", "agape-" + rnd(10)); store("sc-last-name", ""); route(); });
-  loadEvents(false);
-  $("evReload").addEventListener("click", function(){ loadEvents(true); });
-  function join(){ var v = $("joinCode").value.trim(); if (/^[A-Za-z0-9_-]{4,64}$/.test(v)) { store("sc-last-room", v); store("sc-last-name", ""); route(); } else toast("That code doesn’t look right"); }
+}
+function pickHTML(){
+  var last = store("sc-last-room"), lastName = store("sc-last-name");
+  return '<div class="home" style="align-items:flex-start"><div class="home-inner">' +
+    '<div class="row-head" style="align-items:flex-end;margin:0 0 6px"><div><div class="eyebrow">Control</div><h1 style="margin:4px 0 0;font-size:32px">Pick an event</h1></div><a href="#devices" class="hint" style="text-decoration:none">Change device</a></div>' +
+    '<p class="lead" style="margin:6px 0 18px">Stage and Backstage screens switch to the event you pick.</p>' +
+    (last ? '<button class="choice" id="contLast"><div class="ic">▶</div><div><b>Continue: ' + esc(lastName || last) + '</b><span>The event you had open last</span></div></button>' : '') +
+    '<div class="room"><div class="row-head" style="margin:0 0 4px"><h2 style="font-size:15px">Events from Planning Center</h2><button class="mini" id="evReload">↻</button></div><div id="evList"><p class="hint">Loading events …</p></div></div>' +
+    '<div class="room">' +
+      '<div class="row-head" style="margin:0"><h2 style="font-size:15px">Without Planning Center</h2></div>' +
+      '<button class="btn" id="newRoom" style="width:100%;margin-top:10px">New empty clock</button>' +
+      '<div class="join"><input class="input" id="joinCode" placeholder="Room code" autocomplete="off" autocapitalize="off"><button class="btn" id="joinBtn" style="padding:12px 16px">Open</button></div>' +
+    '</div>' +
+  '</div></div>';
+}
+function openEvent(room, name){
+  store("sc-last-room", room); store("sc-last-name", name || "");
+  announce = { room: room, name: name || "", at: Date.now() };
+  location.hash = "control/" + room;
+}
+function bindPick(){
+  if ($("contLast")) $("contLast").addEventListener("click", function(){ openEvent(store("sc-last-room"), store("sc-last-name")); });
+  $("newRoom").addEventListener("click", function(){ openEvent("agape-" + rnd(10), "New clock"); });
+  function join(){ var v = $("joinCode").value.trim(); if (/^[A-Za-z0-9_-]{4,64}$/.test(v)) openEvent(v, ""); else toast("That code doesn’t look right"); }
   $("joinBtn").addEventListener("click", join);
   $("joinCode").addEventListener("keydown", function(e){ if (e.key === "Enter") join(); });
+  loadEvents(false);
+  $("evReload").addEventListener("click", function(){ loadEvents(true); });
 }
 
 function evName(e){ return cleanT(e.title || "") || e.serviceType || "Event"; }
@@ -791,7 +828,7 @@ function renderEvents(list){
     return '<button class="ev' + (e.room === last ? " sel" : "") + '" data-room="' + esc(e.room) + '" data-name="' + esc(evName(e)) + '"><div class="go">' + (e.room === last ? "✓" : "▶") + '</div><div style="flex:1;min-width:0"><b>' + esc(evName(e)) + '</b><span>' + esc([e.dates, e.serviceType].filter(Boolean).join(" · ")) + '</span></div></button>';
   }).join("");
   box.querySelectorAll("[data-room]").forEach(function(b){
-    b.addEventListener("click", function(){ store("sc-last-room", b.getAttribute("data-room")); store("sc-last-name", b.getAttribute("data-name")); route(); window.scrollTo(0, 0); });
+    b.addEventListener("click", function(){ openEvent(b.getAttribute("data-room"), b.getAttribute("data-name")); });
   });
 }
 function loadEvents(manual){
@@ -824,7 +861,7 @@ function stageHTML(){
     '<div class="st-next" id="stNext"></div>' +
     '<div class="st-msg" id="stMsg" hidden></div>' +
     '<div class="st-blank" id="stBlank" hidden></div>' +
-    '<button class="st-fs" id="stFs">⛶ Fullscreen</button>' +
+    '<div class="st-fs" id="stFs" style="display:flex;gap:6px;padding:4px"><button class="mini" id="stFull">⛶ Fullscreen</button><a class="mini" href="#devices" style="text-decoration:none">Change device</a></div>' +
     '<div class="st-conn" id="stConn"></div>' +
   '</div>';
 }
@@ -833,7 +870,7 @@ function bindStage(){
   var btn = $("stFs");
   function wake(){ btn.classList.remove("hide"); clearTimeout(fsHideTimer); fsHideTimer = setTimeout(function(){ btn.classList.add("hide"); }, 3000); }
   document.onmousemove = wake; document.ontouchstart = wake; wake();
-  btn.addEventListener("click", function(){
+  $("stFull").addEventListener("click", function(){
     try {
       if (!document.fullscreenElement && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(function(){});
       else if (document.exitFullscreen) document.exitFullscreen().catch(function(){});
@@ -855,10 +892,10 @@ function songLine(cls, lbl, g){
 function fillStage(){
   if (!$("stage")) return;
   var s = state.settings, c = cur(), i = curIdx();
-  $("stEvent").textContent = s.eventName;
+  $("stEvent").textContent = ROOM ? s.eventName : "Stage Clock";
   $("stClock").style.visibility = s.showClock ? "visible" : "hidden";
-  $("stTitle").textContent = c ? c.title : (state.currentId === "__end" ? "Thank you!" : s.eventName);
-  $("stWho").textContent = c ? (c.who || "") : "";
+  $("stTitle").textContent = !ROOM ? "Waiting for the Control" : c ? c.title : (state.currentId === "__end" ? "Thank you!" : s.eventName);
+  $("stWho").textContent = !ROOM ? "Pick an event on the Control device" : c ? (c.who || "") : "";
 
   var songsHtml = "";
   var hasSongs = !!(c && s.showSongs && c.songs.length);
@@ -891,10 +928,22 @@ function backstageHTML(){
     '<div class="bs-next" id="bsNext"><div class="lbl" id="bsNextLbl">Up next</div><div class="bs-next-title" id="bsNextTitle"></div><div class="bs-next-who" id="bsNextWho"></div><div class="bs-next-in" id="bsNextIn"></div></div>' +
     '<div class="bs-later" id="bsLater"></div>' +
     '<div class="st-conn" id="bsConn"></div>' +
+    '<div class="st-fs" id="bsFs" style="padding:4px"><a class="mini" href="#devices" style="text-decoration:none">Change device</a></div>' +
   '</div>';
+}
+function bindBackstage(){
+  var btn = $("bsFs"), t = null;
+  function wake(){ btn.classList.remove("hide"); clearTimeout(t); t = setTimeout(function(){ btn.classList.add("hide"); }, 3000); }
+  document.onmousemove = wake; document.ontouchstart = wake; wake();
+  requestWake();
 }
 function tickBackstage(){
   if (!$("bs")) return;
+  if (!ROOM) {
+    $("bsEvent").textContent = "Stage Clock"; $("bsClock").textContent = clockTxt();
+    $("bsNowTitle").textContent = "Waiting for the Control"; $("bsNowWho").textContent = "Pick an event on the Control device";
+    $("bsNowTime").textContent = ""; $("bsNext").hidden = true; $("bsLater").innerHTML = ""; return;
+  }
   var s = state.settings, c = cur(), ci = curIdx(), p = projection(), now = Date.now();
   $("bsEvent").textContent = s.eventName;
   $("bsClock").textContent = clockTxt();
@@ -941,7 +990,7 @@ var CHIPS = ["1 minute left", "5 minutes left", "Please wrap up", "Last song", "
 function controlHTML(){
   return '<div class="ctl">' +
     '<header class="ctl-head"><div><div class="eyebrow">Stage Clock · Control</div><h1 id="cEvent"></h1></div>' +
-      '<div style="text-align:right"><span class="pill" id="cConn">Connecting …</span><div style="margin-top:8px"><a href="#" id="cHome">Links &amp; rooms</a></div></div></header>' +
+      '<div style="text-align:right"><span class="pill" id="cConn">Connecting …</span><div style="margin-top:8px;display:flex;gap:10px;justify-content:flex-end"><a href="#" id="cShow">📺 Show on screens</a><a href="#control" id="cHome">Events</a></div></div></header>' +
     '<section class="live" id="cLive">' +
       '<div class="live-label">Live now</div>' +
       '<div class="live-title" id="cTitle"></div>' +
@@ -1091,7 +1140,7 @@ function confirmBox(text, yes){
 }
 
 function bindControl(){
-  $("cHome").addEventListener("click", function(e){ e.preventDefault(); location.hash = ""; route(); });
+  $("cShow").addEventListener("click", function(e){ e.preventDefault(); showOnAllScreens(); toast("Stage & Backstage now show this event"); });
   document.querySelectorAll("[data-act]").forEach(function(b){ b.addEventListener("click", function(){ actions[b.getAttribute("data-act")](); }); });
   $("msgForm").addEventListener("submit", function(e){ e.preventDefault(); sendMsg($("msgInput").value); $("msgInput").value = ""; $("msgInput").blur(); });
   $("chips").addEventListener("click", function(e){ var c = e.target.closest("[data-chip]"); if (c) sendMsg(c.getAttribute("data-chip")); });
@@ -1315,7 +1364,7 @@ setInterval(tick, 200);
 var toastT = null;
 function toast(msg){ var t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(function(){ t.classList.remove("show"); }, 2200); }
 
-window.addEventListener("load", function(){ if (ROOM && view !== "home" && !clients.length) connect(); });
+window.addEventListener("load", function(){ if ((ROOM || FOLLOW) && view !== "devices" && view !== "pick" && !clients.length) connect(); });
 route();
 })();
 </script>
