@@ -195,6 +195,38 @@ textarea.input{resize:vertical;min-height:120px;line-height:1.45;font-size:14px}
 .confirm-box p{line-height:1.5;margin-bottom:16px}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:#fff;color:#000;font-weight:700;font-size:14px;padding:10px 16px;border-radius:12px;opacity:0;transition:.25s;z-index:30;pointer-events:none;max-width:90vw;text-align:center}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* ---------- Backstage ---------- */
+.bs{position:fixed;inset:0;display:flex;flex-direction:column;gap:2.4vh;padding:3vh 4vw;background:var(--bg);overflow:hidden;user-select:none}
+.bs .lbl{font-size:max(12px,1.4vw);font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.bs-now{display:flex;align-items:center;gap:3vw;padding:2.2vh 2.4vw;border-radius:1.6vw;background:var(--panel);border:1px solid var(--line)}
+.bs-now .tx{flex:1;min-width:0}
+.bs-now-title{font-size:max(18px,3vw);font-weight:800;margin-top:.6vh;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bs-now-who{font-size:max(13px,1.8vw);color:var(--muted);margin-top:.3vh}
+.bs-now-time{font-size:max(28px,5.5vw);font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.bs-now-time.warn{color:var(--warn)} .bs-now-time.over{color:var(--over)}
+.bs-next{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;padding:3vh 3vw;border-radius:2vw;border:3px solid var(--accent);background:#FFE6000d;transition:background .4s,color .4s}
+.bs-next .lbl{color:var(--accent);font-size:max(14px,1.9vw)}
+.bs-next-title{font-size:max(30px,6.4vw);font-weight:900;line-height:1.02;letter-spacing:-.02em;margin-top:1.4vh}
+.bs-next-who{font-size:max(18px,3.4vw);font-weight:600;margin-top:1vh;color:#e6e6ea}
+.bs-next-in{font-size:max(18px,3.2vw);font-weight:800;margin-top:2.4vh;font-variant-numeric:tabular-nums;color:var(--accent)}
+.bs-next.ready{background:var(--accent);color:var(--on-accent)}
+.bs-next.ready .lbl,.bs-next.ready .bs-next-in,.bs-next.ready .bs-next-who{color:var(--on-accent)}
+.bs-next.standby{animation:standby 1s ease-in-out infinite alternate}
+@keyframes standby{from{background:var(--accent)}to{background:#fff9b8}}
+.bs-later{display:flex;gap:1.4vw}
+.bs-later .li{flex:1;min-width:0;padding:1.6vh 1.6vw;border-radius:1.2vw;background:var(--panel);border:1px solid var(--line)}
+.bs-later .li b{display:block;font-size:max(14px,1.9vw);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bs-later .li span{display:block;font-size:max(12px,1.5vw);color:var(--muted);margin-top:.4vh;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bs-later .li em{font-style:normal;color:var(--accent);font-weight:700}
+/* ---------- Catch-up suggestion ---------- */
+.catch{background:#ff8a1f12;border:1px solid #ff8a1f66;border-radius:18px;padding:14px 16px;margin-bottom:14px}
+.catch h3{font-size:15px;font-weight:800;color:var(--warn)}
+.catch p{font-size:14px;line-height:1.45;margin-top:6px;color:#e6e6ea}
+.catch ul{list-style:none;margin-top:8px}
+.catch li{display:flex;justify-content:space-between;font-size:15px;font-weight:700;padding:6px 0;border-top:1px solid #ff8a1f33}
+.catch li span{color:var(--warn)}
+.catch .row{display:flex;gap:8px;margin-top:12px}
+.catch .row .btn{flex:1}
 .ampm{font-size:.28em;letter-spacing:0;margin-left:.15em;font-weight:700;color:var(--muted)}
 </style>
 </head>
@@ -259,7 +291,7 @@ var DEFAULT_ITEMS = [
 var DEFAULT = {
   items: [], currentId: null, songIdx: 0, running: false, endsAt: 0, remaining: 0,
   message: null,
-  settings: { eventName: "Agape Night", warnSec: 120, showClock: true, showNext: true, showSongs: true, blank: false },
+  settings: { eventName: "Agape Night", warnSec: 120, showClock: true, showNext: true, showSongs: true, blank: false, endAt: "" },
   updatedAt: 0
 };
 var state = clone(DEFAULT);
@@ -287,6 +319,7 @@ function normalize(d){
     };
   });
   s.songIdx = Math.max(0, Number(s.songIdx) || 0);
+  if (!/^\d{2}:\d{2}$/.test(s.settings.endAt || "")) s.settings.endAt = "";
   if (s.message && typeof s.message.text !== "string") s.message = null;
   return s;
 }
@@ -308,6 +341,51 @@ function clockTxt(d){ d = d || new Date(); var hh = d.getHours(); return (hh%12|
 function clockBig(d){ d = d || new Date(); var hh = d.getHours(); return (hh%12||12) + ":" + pad(d.getMinutes()) + '<span class="ampm">' + (hh<12?"AM":"PM") + '</span>'; }
 function atTxt(at){ if (!at) return ""; var p = at.split(":"), hh = +p[0]; return (hh%12||12) + ":" + p[1] + " " + (hh<12?"AM":"PM"); }
 function atDate(at){ var p = at.split(":"), d = new Date(); d.setHours(+p[0], +p[1], 0, 0); return d; }
+// Projected start time of each upcoming item and of the end of the night.
+function projection(){
+  var items = state.items, ci = curIdx(), now = Date.now(), t, starts = [];
+  if (state.currentId === "__end" || !items.length) return { starts: [], finish: null };
+  if (ci >= 0) t = now + Math.max(0, remainingMs());
+  else { t = now; if (items[0].at) t = Math.max(now, atDate(items[0].at).getTime()); }
+  for (var i=0;i<items.length;i++) {
+    if (ci >= 0 && i <= ci) { starts.push(null); continue; }
+    starts.push(t); t += items[i].dur*1000;
+  }
+  return { starts: starts, finish: t };
+}
+// The time the night should end: the set target, or the last planned item's end.
+function targetEnd(){
+  if (state.settings.endAt) return atDate(state.settings.endAt).getTime();
+  var it = state.items[state.items.length-1];
+  return it && it.at ? atDate(it.at).getTime() + it.dur*1000 : null;
+}
+// Suggest shortening upcoming items (worship sets first) so the night ends on time.
+function suggestion(){
+  var ci = curIdx(); if (ci < 0) return null;
+  var p = projection(), te = targetEnd();
+  if (!p.finish || !te) return null;
+  var over = Math.round((p.finish - te) / 60000);
+  if (over < 2) return null;
+  var future = [];
+  state.items.forEach(function(it, i){ if (i > ci && it.dur >= 600) future.push(it); });
+  var pool = future.filter(function(it){ return it.songs.length; });
+  if (!pool.length) pool = future;
+  var total = pool.reduce(function(a, it){ return a + it.dur; }, 0);
+  var cuts = pool.map(function(it){
+    var max = Math.floor(it.dur * 0.3 / 60);
+    return { id: it.id, title: it.title, dur: it.dur, max: max, min: Math.min(max, Math.floor(over * it.dur / total)) };
+  });
+  var got = cuts.reduce(function(a, c){ return a + c.min; }, 0);
+  var byLen = cuts.slice().sort(function(a, b){ return b.dur - a.dur; });
+  while (got < over) {
+    var c = byLen.filter(function(x){ return x.min < x.max; })[0];
+    if (!c) break;
+    c.min++; got++;
+  }
+  cuts = cuts.filter(function(c){ return c.min > 0; });
+  return { over: over, finish: p.finish, target: te, cuts: cuts, short: over - got };
+}
+
 function phase(){
   if (!cur()) return "idle";
   var r = remainingMs();
@@ -405,7 +483,7 @@ function apply(d){
    ============================================================ */
 function parseHash(){
   var h = location.hash.replace(/^#/, "");
-  var m = h.match(/^(stage|control)\/([A-Za-z0-9_-]{4,64})$/);
+  var m = h.match(/^(stage|control|backstage)\/([A-Za-z0-9_-]{4,64})$/);
   return m ? { view: m[1], room: m[2] } : { view: "home", room: null };
 }
 function route(){
@@ -414,10 +492,11 @@ function route(){
   view = r.view;
   if (r.room) { ROOM = r.room; store("sc-last-room", ROOM); }
   if (view === "home") { disconnect(); ROOM = null; }
-  document.body.style.overflow = view === "stage" ? "hidden" : "";
+  document.body.style.overflow = (view === "stage" || view === "backstage") ? "hidden" : "";
   var app = $("app");
   if (view === "home") { app.innerHTML = homeHTML(); bindHome(); }
   else if (view === "stage") { app.innerHTML = stageHTML(); bindStage(); }
+  else if (view === "backstage") { app.innerHTML = backstageHTML(); requestWake(); }
   else { app.innerHTML = controlHTML(); bindControl(); }
   if (view !== "home" && (roomChanged || !clients.length)) connect();
   fill();
@@ -426,7 +505,7 @@ window.addEventListener("hashchange", route);
 
 function fill(){
   if (view === "stage") fillStage();
-  else if (view === "control") fillControl();
+  else if (view === "control") { fillControl(); renderCatch(); }
   renderConn();
   tick();
 }
@@ -435,7 +514,7 @@ function renderConn(){
   var txt = conn === "live" ? (synced ? "Live · " + n + "/" + clients.length : "Syncing …") : conn === "connecting" ? "Connecting …" : conn === "off" ? "No connection – retrying" : "";
   var el = $("cConn");
   if (el) { el.textContent = txt; el.className = "pill " + (conn === "live" && synced ? "live" : conn === "off" ? "off" : ""); }
-  var st = $("stConn");
+  var st = $("stConn") || $("bsConn");
   if (st) { st.textContent = (conn === "live" && synced) ? "" : (conn === "off" ? "⚠ Not connected to the sync servers – check the internet / Wi-Fi. Retrying …" : txt); st.classList.toggle("bad", conn === "off"); }
 }
 
@@ -456,6 +535,8 @@ function homeHTML(){
         '<button class="mini" data-copy="' + esc(st) + '">Copy link</button><a class="mini pri" href="#stage/' + esc(last) + '" style="text-decoration:none">Open</a></div>' +
       '<div class="linkrow"><div class="ic">🎛️</div><div class="tx"><b>Control</b><span>Your phone</span></div>' +
         '<button class="mini" data-copy="' + esc(ct) + '">Copy link</button><a class="mini pri" href="#control/' + esc(last) + '" style="text-decoration:none">Open</a></div>' +
+      '<div class="linkrow"><div class="ic">🚪</div><div class="tx"><b>Backstage</b><span>Screen in the waiting area</span></div>' +
+        '<button class="mini" data-copy="' + esc(base() + "#backstage/" + last) + '">Copy link</button><a class="mini pri" href="#backstage/' + esc(last) + '" style="text-decoration:none">Open</a></div>' +
       '<div class="qr"><div id="qrBox"></div><p>Scan with your phone to open <b>Control</b> for this room.</p></div>' +
     '</div>';
   }
@@ -560,6 +641,59 @@ function fillStage(){
 }
 
 /* ============================================================
+   BACKSTAGE
+   ============================================================ */
+function backstageHTML(){
+  return '<div class="bs" id="bs">' +
+    '<div class="st-top"><span id="bsEvent"></span><span class="st-clock" id="bsClock"></span></div>' +
+    '<div class="bs-now"><div class="tx"><div class="lbl">On stage now</div><div class="bs-now-title" id="bsNowTitle"></div><div class="bs-now-who" id="bsNowWho"></div></div><div class="bs-now-time" id="bsNowTime"></div></div>' +
+    '<div class="bs-next" id="bsNext"><div class="lbl" id="bsNextLbl">Up next</div><div class="bs-next-title" id="bsNextTitle"></div><div class="bs-next-who" id="bsNextWho"></div><div class="bs-next-in" id="bsNextIn"></div></div>' +
+    '<div class="bs-later" id="bsLater"></div>' +
+    '<div class="st-conn" id="bsConn"></div>' +
+  '</div>';
+}
+function tickBackstage(){
+  if (!$("bs")) return;
+  var s = state.settings, c = cur(), ci = curIdx(), p = projection(), now = Date.now();
+  $("bsEvent").textContent = s.eventName;
+  $("bsClock").textContent = clockTxt();
+  var tm = $("bsNowTime");
+  if (c) {
+    $("bsNowTitle").textContent = c.title;
+    var g = c.songs.length ? c.songs[Math.min(state.songIdx, c.songs.length-1)] : null;
+    $("bsNowWho").textContent = [c.who, g ? "♪ " + g.t : ""].filter(Boolean).join(" · ");
+    var r = remainingMs(); tm.textContent = fmt(r) + (state.running ? "" : " ⏸");
+    tm.className = "bs-now-time " + (r < 0 ? "over" : r <= s.warnSec*1000 ? "warn" : "");
+  } else {
+    $("bsNowTitle").textContent = state.currentId === "__end" ? "That’s a wrap – thank you!" : "Not started yet";
+    $("bsNowWho").textContent = ""; tm.textContent = ""; tm.className = "bs-now-time";
+  }
+  var ni = state.currentId === "__end" ? -1 : (ci >= 0 ? ci + 1 : 0);
+  var nx = ni >= 0 ? state.items[ni] : null, box = $("bsNext");
+  if (nx) {
+    box.hidden = false;
+    var start = p.starts[ni], mins = Math.max(0, Math.ceil((start - now) / 60000));
+    var overrun = c && remainingMs() < 0;
+    $("bsNextTitle").textContent = nx.title;
+    $("bsNextWho").textContent = nx.who || "";
+    var cls = "bs-next";
+    if (overrun || mins <= 1) { cls += " ready standby"; $("bsNextLbl").textContent = "Stand by – you’re on any moment"; }
+    else if (mins <= 5) { cls += " ready"; $("bsNextLbl").textContent = "Get ready – up next"; }
+    else $("bsNextLbl").textContent = "Up next";
+    box.className = cls;
+    $("bsNextIn").textContent = (overrun ? "any moment now" : mins <= 0 ? "now" : "in " + mins + " min") + " · ~" + clockTxt(new Date(start));
+  } else box.hidden = true;
+  if (tickN % 5 === 0 || !$("bsLater").children.length) {
+    var html = "";
+    for (var k = ni + 1; k < state.items.length && k <= ni + 3 && ni >= 0; k++) {
+      var it = state.items[k];
+      html += '<div class="li"><b>' + esc(it.title) + '</b><span><em>~' + esc(clockTxt(new Date(p.starts[k]))) + '</em>' + (it.who ? ' · ' + esc(it.who) : '') + '</span></div>';
+    }
+    $("bsLater").innerHTML = html;
+  }
+}
+
+/* ============================================================
    CONTROL
    ============================================================ */
 var CHIPS = ["1 minute left", "5 minutes left", "Please wrap up", "Last song", "One more song", "Louder please 🎤", "Slow down", "Mic on?", "Amazing! 🙌"];
@@ -583,6 +717,7 @@ function controlHTML(){
         '<button class="btn" data-act="plus">+1 min</button>' +
       '</div>' +
     '</section>' +
+    '<section class="catch" id="cCatch" hidden></section>' +
     '<section class="card" id="cSetCard" hidden>' +
       '<div class="row-head"><h2>Setlist</h2><div style="display:flex;gap:6px"><button class="mini" data-act="songPrev">◀ Song</button><button class="mini pri" data-act="songNext">Next song ▶</button></div></div>' +
       '<ol class="setlist" id="cSetlist"></ol>' +
@@ -602,6 +737,7 @@ function controlHTML(){
     '<section class="card">' +
       '<h2 style="margin-bottom:6px">Stage display</h2>' +
       '<div class="set-row"><span>Event name</span><input class="input" id="sName" maxlength="40"></div>' +
+      '<div class="set-row"><span>Target end time</span><input class="input sm" id="sEnd" type="time" style="width:120px"></div>' +
       '<div class="set-row"><span>Orange at (min left)</span><input class="input sm" id="sWarn" type="number" min="0" max="30" step="0.5" inputmode="decimal"></div>' +
       '<div class="set-row"><span>Show setlist</span><label class="sw"><input type="checkbox" id="sSongs"><i></i></label></div>' +
       '<div class="set-row"><span>Show clock</span><label class="sw"><input type="checkbox" id="sClock"><i></i></label></div>' +
@@ -745,6 +881,15 @@ function bindControl(){
     });
   });
   $("sName").addEventListener("change", function(){ var v = this.value.trim() || "Agape Night"; commit(function(s){ s.settings.eventName = v.slice(0,40); }); });
+  $("sEnd").addEventListener("change", function(){ var v = /^\d{2}:\d{2}/.test(this.value) ? this.value.slice(0,5) : ""; commit(function(s){ s.settings.endAt = v; }); });
+  $("cCatch").addEventListener("click", function(e){
+    var b = e.target.closest("[data-catch]"); if (!b) return;
+    var sg = suggestion(); if (!sg) return;
+    if (b.getAttribute("data-catch") === "no") { dismissedOver = sg.over; renderCatch(); return; }
+    commit(function(s){ sg.cuts.forEach(function(c){ s.items.forEach(function(it){ if (it.id === c.id) it.dur = Math.max(60, it.dur - c.min*60); }); }); });
+    dismissedOver = 0;
+    toast("Run sheet updated");
+  });
   $("sWarn").addEventListener("change", function(){ var v = Math.max(0, Math.min(30, parseFloat(this.value)||0)); commit(function(s){ s.settings.warnSec = Math.round(v*60); }); });
   [["sSongs","showSongs"],["sClock","showClock"],["sNext","showNext"],["sBlank","blank"]].forEach(function(p){
     $(p[0]).addEventListener("change", function(){ var v = this.checked; commit(function(s){ s.settings[p[1]] = v; }); });
@@ -781,6 +926,7 @@ function fillControl(){
   else $("cMsgCur").hidden = true;
   setVal("sName", s.eventName);
   setVal("sWarn", +(s.warnSec/60).toFixed(1));
+  setVal("sEnd", s.endAt || "");
   $("sSongs").checked = !!s.showSongs; $("sClock").checked = !!s.showClock; $("sNext").checked = !!s.showNext; $("sBlank").checked = !!s.blank;
   renderList();
 }
@@ -804,12 +950,29 @@ function renderList(){
 }
 function renderSched(){
   var el = $("cSched"); if (!el) return;
-  var c = cur();
-  if (!c || !c.at) { el.textContent = ""; el.className = "sched"; return; }
-  var diff = Math.round((Date.now() + Math.max(0, remainingMs()) - (atDate(c.at).getTime() + c.dur*1000)) / 60000);
-  if (Math.abs(diff) < 1) { el.textContent = "On schedule"; el.className = "sched ok"; }
-  else if (diff > 0) { el.textContent = diff + " min behind schedule"; el.className = "sched late"; }
-  else { el.textContent = (-diff) + " min ahead of schedule"; el.className = "sched ok"; }
+  var p = projection(), te = targetEnd();
+  if (!cur() || !p.finish || !te) { el.textContent = ""; el.className = "sched"; return; }
+  var d = Math.round((p.finish - te) / 60000), end = clockTxt(new Date(p.finish));
+  if (Math.abs(d) < 1) { el.textContent = "On schedule · ends " + end; el.className = "sched ok"; }
+  else if (d > 0) { el.textContent = "Ends ~" + end + " · " + d + " min over"; el.className = "sched late"; }
+  else { el.textContent = "Ends ~" + end + " · " + (-d) + " min early"; el.className = "sched ok"; }
+}
+var dismissedOver = 0, lastCatchKey = "";
+function renderCatch(){
+  var box = $("cCatch"); if (!box) return;
+  var sg = suggestion();
+  if (!sg || (dismissedOver && sg.over < dismissedOver + 3)) { box.hidden = true; lastCatchKey = ""; return; }
+  var key = sg.over + "|" + sg.cuts.map(function(c){ return c.id + c.min; }).join(",");
+  if (key === lastCatchKey && !box.hidden) return;
+  lastCatchKey = key;
+  var h = '<h3>⏱ Running ' + sg.over + ' min over</h3>' +
+    '<p>Projected end ~' + esc(clockTxt(new Date(sg.finish))) + ', target ' + esc(clockTxt(new Date(sg.target))) + '.' + (sg.cuts.length ? ' To catch up you could shorten:' : ' There’s nothing left that can be shortened automatically.') + '</p>';
+  if (sg.cuts.length) {
+    h += '<ul>' + sg.cuts.map(function(c){ return '<li>' + esc(c.title) + ' <span>−' + c.min + ' min (' + Math.round((c.dur/60) - c.min) + ' min)</span></li>'; }).join("") + '</ul>';
+    if (sg.short > 0) h += '<p>That still leaves ' + sg.short + ' min – maybe drop a song.</p>';
+    h += '<div class="row"><button class="btn" data-catch="no">Dismiss</button><button class="btn primary" data-catch="yes">Apply</button></div>';
+  } else h += '<div class="row"><button class="btn" data-catch="no">Dismiss</button></div>';
+  box.innerHTML = h; box.hidden = false;
 }
 
 /* ============================================================
@@ -827,6 +990,8 @@ function tick(){
     if (c) $("stTimer").textContent = fmt(r); else $("stTimer").innerHTML = clockBig();
     $("stBar").style.width = (frac*100) + "%";
     $("stState").textContent = !c ? "" : ph === "over" ? "Overtime" : (!state.running ? "Paused" : "");
+  } else if (view === "backstage") {
+    tickBackstage();
   } else if (view === "control" && $("cLive")) {
     $("cLive").className = "live " + (ph === "idle" ? "" : ph);
     $("cTimer").textContent = c ? fmt(r) : "0:00";
@@ -837,6 +1002,7 @@ function tick(){
     else { tg.textContent = "▶ Start"; tg.classList.remove("running"); }
     if (tickN % 25 === 0) renderList();
     renderSched();
+    if (tickN % 5 === 0) renderCatch();
   }
 }
 setInterval(tick, 200);
