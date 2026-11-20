@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#08080b">
-<title>Agape Night – Stage Clock</title>
+<title>Stage Clock</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <!--
-  AGAPE NIGHT – STAGE CLOCK
+  STAGE CLOCK – The Message
   One file, no login. Upload to GitHub Pages (or any static host).
   Devices sync live through a free public MQTT server (see BROKER below).
   Every event gets a private "room code" that lives in the link (#stage/CODE, #control/CODE).
@@ -87,8 +87,8 @@ a{color:var(--accent2)}
 .song-note{color:var(--accent);font-weight:700;font-size:max(13px,1.9vw);padding:0 2vw}
 .st-next{font-size:max(15px,2.4vw);color:var(--muted);text-align:center;min-height:1.3em}
 .st-next b{color:var(--text);font-weight:700}
-.st-msg{position:absolute;left:4vw;right:4vw;bottom:4vh;background:var(--accent);color:var(--on-accent);font-size:max(24px,5.2vw);font-weight:900;padding:3vh 3vw;border-radius:2vw;text-align:center;line-height:1.08;box-shadow:0 2vh 6vh #000a;z-index:3}
-.stage.has-songs .st-msg{top:8vh;bottom:auto;font-size:max(22px,4.4vw);padding:2.4vh 3vw}
+.st-msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:var(--accent);color:var(--on-accent);font-weight:900;padding:6vh 6vw;text-align:center;line-height:1.05;letter-spacing:-.02em;z-index:4;overflow-wrap:anywhere}
+.st-msg.s1{font-size:min(15vw,30vh)} .st-msg.s2{font-size:min(10vw,20vh)} .st-msg.s3{font-size:min(8vw,16vh)} .st-msg.s4{font-size:min(6vw,12vh)}
 .st-msg.flash{animation:flash .9s ease-in-out infinite alternate}
 .st-blank{position:absolute;inset:0;background:#000;z-index:5}
 .st-fs{position:absolute;top:1.5vh;left:50%;transform:translateX(-50%);background:#ffffff14;border:1px solid #ffffff22;color:#fff;font-size:13px;font-weight:600;padding:8px 14px;border-radius:99px;z-index:6;transition:opacity .4s}
@@ -143,7 +143,7 @@ a{color:var(--accent2)}
 .sg.cur .key{background:var(--accent);color:var(--on-accent)}
 .msg-cur{display:flex;align-items:center;gap:10px;background:color-mix(in srgb,var(--accent) 8%,transparent);border:1px solid color-mix(in srgb,var(--accent) 40%,transparent);color:var(--accent);border-radius:12px;padding:10px 12px;margin:10px 0 0;font-weight:700}
 .msg-cur span{flex:1;min-width:0;overflow-wrap:anywhere}
-.msg-cur button{font-size:13px;font-weight:700;color:var(--text);background:#ffffff14;border-radius:8px;padding:6px 10px;white-space:nowrap}
+.msg-cur button{font-size:15px;font-weight:800;color:var(--on-accent);background:var(--accent);border-radius:10px;padding:10px 16px;white-space:nowrap}
 .msg-form{display:flex;gap:8px;margin-top:12px}
 .input{flex:1;min-width:0;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:16px;outline:none}
 .input:focus{border-color:var(--accent)}
@@ -262,9 +262,10 @@ textarea.input{resize:vertical;min-height:120px;line-height:1.45;font-size:14px}
 .hero h1{font-size:clamp(34px,6vw,56px);font-weight:900;letter-spacing:-.03em;line-height:1;margin:8px 0 10px}
 .hero p{color:var(--muted);font-size:16px;line-height:1.5;max-width:560px}
 .roles{display:grid;gap:12px}
-@media (min-width:760px){ .roles{grid-template-columns:repeat(3,1fr);gap:16px} }
+@media (min-width:760px){ .roles{grid-template-columns:repeat(2,1fr);gap:16px} }
+@media (min-width:1100px){ .roles{grid-template-columns:repeat(4,1fr)} }
 .role{position:relative;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:20px;display:flex;gap:16px;align-items:center;transition:border-color .15s,transform .12s,background .15s}
-@media (min-width:760px){ .role{flex-direction:column;align-items:flex-start;padding:26px;min-height:250px} }
+@media (min-width:760px){ .role{flex-direction:column;align-items:flex-start;padding:26px;min-height:220px} }
 .role:hover{border-color:color-mix(in srgb,var(--accent) 55%,#272731)}
 .role:active{transform:scale(.985)}
 .role .ri{width:58px;height:58px;border-radius:18px;background:var(--panel2);border:1px solid var(--line);display:grid;place-items:center;flex:none}
@@ -320,6 +321,65 @@ textarea.input{resize:vertical;min-height:120px;line-height:1.45;font-size:14px}
 .st-fs{display:flex;gap:6px;padding:6px!important;background:#000b!important;border:1px solid #ffffff26!important;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
 .st-fs .mini{background:#ffffff14;border-color:#ffffff22;color:#fff;font-size:14px;padding:9px 14px;display:inline-flex;align-items:center;gap:7px}
 .st-fs .mini svg{width:16px;height:16px}
+/* ---------- Stage manager (phone, read-only) ---------- */
+.mg{max-width:640px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top)) 16px calc(90px + env(safe-area-inset-bottom))}
+.mg-now{position:sticky;top:8px;z-index:5;background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 14%,#121218),#121218 65%);border:1px solid color-mix(in srgb,var(--accent) 30%,#272731);border-radius:22px;padding:16px;box-shadow:0 10px 30px #000a}
+.mg-row{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.mg-title{font-size:19px;font-weight:800;line-height:1.15;margin-top:4px}
+.mg-who{font-size:13px;color:var(--muted);margin-top:3px}
+.mg-time{font-size:46px;font-weight:800;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums;flex:none}
+.mg-now.warn .mg-time{color:var(--warn)} .mg-now.over .mg-time{color:var(--over)}
+.mg-now.over .bar>i{background:var(--over)} .mg-now.warn .bar>i{background:var(--warn)}
+.mg-now .bar{margin-top:12px}
+.mg-sub{display:flex;justify-content:space-between;gap:10px;margin-top:10px;font-size:13px;font-weight:700}
+.mg-msg{margin-top:10px;background:var(--accent);color:var(--on-accent);border-radius:12px;padding:9px 12px;font-weight:800;font-size:14px}
+.call{margin-top:14px;border-radius:20px;padding:16px;border:2px solid var(--line);background:var(--panel)}
+.call.soon{border-color:var(--accent)}
+.call.now{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.call .lbl{font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.call.soon .lbl{color:var(--accent)} .call.now .lbl,.call.now .mg-who{color:var(--on-accent)}
+.call .in{font-size:15px;font-weight:800;margin-top:6px}
+.call.soon .in{color:var(--accent)}
+.people{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.person{display:inline-flex;align-items:center;gap:6px;background:var(--panel2);border:1px solid var(--line);border-radius:99px;padding:6px 11px;font-size:14px;font-weight:700}
+.call.now .person{background:#0000001a;border-color:#00000026;color:var(--on-accent)}
+.person small{font-weight:600;color:var(--muted);font-size:12px}
+.call.now .person small{color:#000a}
+.tl{list-style:none;margin-top:6px}
+.tl li{display:flex;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.tl li:first-child{border-top:0}
+.tl .tm{width:66px;flex:none;font-size:13px;font-weight:800;font-variant-numeric:tabular-nums}
+.tl .tm small{display:block;font-weight:600;color:var(--muted);margin-top:2px}
+.tl .bd{flex:1;min-width:0}
+.tl .bd b{display:block;font-size:15px}
+.tl .bd span{display:block;font-size:13px;color:var(--muted);margin-top:2px}
+.tl .songs{margin-top:6px;display:grid;gap:3px}
+.tl .songs div{font-size:13px;color:#cfcfd6;display:flex;gap:8px}
+.tl .songs em{font-style:normal;font-weight:800;font-size:11px;background:#ffffff18;border-radius:5px;padding:1px 6px;flex:none}
+.tl li.done{opacity:.4}
+.tl li.live{background:color-mix(in srgb,var(--accent) 9%,transparent);border-radius:14px;padding:12px;margin:2px -12px;border-top:0}
+.tl li.live+li{border-top:0}
+.tl li.live .bd b{color:var(--accent)}
+.tl .tag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;border-radius:99px;padding:2px 7px;margin-left:6px;vertical-align:middle;background:var(--accent);color:var(--on-accent)}
+.tl .bd b .tag{display:inline-block;margin-top:0;font-size:10px;color:var(--on-accent)}
+.tl .bd b .tag.nx{color:var(--text)}
+.tl .tag.nx{background:var(--panel2);color:var(--text);border:1px solid var(--line)}
+.tl .sep{display:block;font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);padding:16px 0 4px;border-top:0}
+.jump{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom));background:var(--accent);color:var(--on-accent);font-weight:800;font-size:15px;border-radius:99px;padding:12px 20px;box-shadow:0 8px 24px #000a;z-index:9}
+/* ---------- Connect / pairing ---------- */
+.paircode{white-space:nowrap;font-size:clamp(52px,10vw,120px);font-weight:900;letter-spacing:.06em;text-align:center;background:var(--panel);border:1px solid var(--line);border-radius:28px;padding:4vh 4vw;font-variant-numeric:tabular-nums;margin-top:6px}
+.pairhint{text-align:center;color:var(--muted);font-size:15px;line-height:1.5;margin-top:14px}
+.pairbox{display:flex;gap:8px;margin-top:12px}
+.pairbox .input{font-size:22px;letter-spacing:.2em;text-align:center;font-weight:800}
+.keybox{margin-top:12px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px;font-size:14px;line-height:1.5;color:var(--muted)}
+.keybox code{display:block;color:var(--text);font-size:16px;font-weight:800;word-break:break-all;margin:6px 0}
+.team{display:grid;gap:10px;margin-top:6px}
+.team .tg{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
+.team .tg b{display:block;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.team .pp{display:flex;justify-content:space-between;gap:10px;font-size:15px;padding:4px 0}
+.team .pp span{color:var(--muted);font-size:13px;text-align:right}
+.team .pp.unc{opacity:.6}
+.team .pp.unc span:after{content:" · not confirmed"}
 .ampm{font-size:.28em;letter-spacing:0;margin-left:.15em;font-weight:700;color:var(--muted)}
 </style>
 </head>
@@ -343,46 +403,12 @@ var BROKERS = [
   "wss://broker.hivemq.com:8884/mqtt",
   "wss://test.mosquitto.org:8081/mqtt"
 ];
-var TOPIC_PREFIX = "agape-stageclock/v2/";
+var TOPIC_PREFIX = "agape-stageclock/v2/"; // internal channel name – kept so existing rooms keep working
 
-// Cloudflare Worker that reads the Agape Night plan from Planning Center (used when no other link is set).
+// Cloudflare Worker that reads plans from Planning Center (used when no other link is set).
 var PCO_WORKER_URL = "https://agape-pco.mika-shortfilms.workers.dev";
 
-// The run sheet a brand-new room starts with.
-var DEFAULT_ITEMS = [
-  // Imported from Planning Center (General Worship · plan 93180450) on 14 Nov 2026
-  { id:"a1",  title:"Countdown Video",        who:"Production Crew", dur:180,  at:"19:05", songs:[] },
-  { id:"a2",  title:"Opening the Night",      who:"Paaniz + Mika",   dur:240,  at:"19:08", songs:[] },
-  { id:"a3",  title:"Intro Video",            who:"Production Crew", dur:180,  at:"19:12", songs:[] },
-  { id:"a4",  title:"Worship Set 1",          who:"Worship Team 1",  dur:2100, at:"19:15", songs:[
-      {t:"I Thank God", key:"G", lead:"Calebe"},
-      {t:"Praise", key:"E", lead:"Victor"},
-      {t:"Amazing", key:"G", lead:"Calebe"},
-      {t:"Eyes Of My Heart", key:"Ab", lead:"Kavita"},
-      {t:"Build My Life", key:"D", lead:"Steffi"} ] },
-  { id:"a5",  title:"Message 1",              who:"",                dur:600,  at:"19:50", songs:[] },
-  { id:"a6",  title:"Worship Set 2",          who:"Worship Team 1",  dur:2100, at:"20:00", songs:[
-      {t:"God I'm Just Grateful", key:"D", lead:"Calebe"},
-      {t:"All Hail King Jesus", key:"C", lead:"Zaira"},
-      {t:"Great Are You Lord", key:"D", lead:"Zaira"},
-      {t:"Here As In Heaven", key:"C#", lead:"Victor", note:"1 chorus in Portuguese (Victor, Calebe, Zaira)"},
-      {t:"Touch Of Heaven", key:"C#", lead:"Victor"} ] },
-  { id:"a7",  title:"Message 2 & Altar Call", who:"Daniel",          dur:1200, at:"20:35", songs:[] },
-  { id:"a8",  title:"Worship Set 3",          who:"Worship Team 2",  dur:2100, at:"20:55", songs:[
-      {t:"How He Loves", key:"F", lead:"Josh W.", note:"Only Josh, Noah, Steffi"},
-      {t:"Beautiful Name", key:"G", lead:"Josh W."},
-      {t:"Who Else", key:"Ab", lead:"Steffi", note:"1 chorus in German (Mika)"},
-      {t:"Our Father", key:"G", lead:"Josh W."},
-      {t:"Yeshua", key:"G", lead:"Josh W."},
-      {t:"Rest On Us", key:"G", lead:"Josh W."},
-      {t:"I Surrender", key:"G", lead:"Josh W."} ] },
-  { id:"a9",  title:"Praise Set 4",           who:"Worship Team 2",  dur:1200, at:"21:30", songs:[
-      {t:"Washed", key:"G", lead:"Mika"},
-      {t:"I Thank God", key:"E", lead:"Tallie"},
-      {t:"Amazing", key:"G", lead:"Tallie, Josh W."},
-      {t:"Goodbye", key:"G", lead:"Mika"} ] },
-  { id:"a10", title:"Closing the Night",      who:"Paaniz + Mika",   dur:300,  at:"21:50", songs:[] }
-];
+
 
 /* ============================================================ */
 var DEFAULT = {
@@ -428,6 +454,7 @@ function normalize(d){
   if (!/^\d{1,12}$/.test(s.settings.pcoPlan || "")) s.settings.pcoPlan = DEFAULT.settings.pcoPlan;
   s.pco = { hash: str(s.pco && s.pco.hash, 64), syncedAt: Number(s.pco && s.pco.syncedAt) || 0 };
   if (s.message && typeof s.message.text !== "string") s.message = null;
+  s.roster = Array.isArray(s.roster) ? s.roster.slice(0, 200).map(function(r){ return { name: str(r && r.name, 60), position: str(r && r.position, 60), team: str(r && r.team, 60), status: r && r.status === "confirmed" ? "confirmed" : "unconfirmed" }; }).filter(function(r){ return r.name; }) : [];
   return s;
 }
 function cur(s){ s = s || state; for (var i=0;i<s.items.length;i++) if (s.items[i].id === s.currentId) return s.items[i]; return null; }
@@ -506,6 +533,34 @@ function phase(){
    ============================================================ */
 var clients = [], pendingPublish = false;
 function liveCount(){ return clients.filter(function(c){ return c.connected; }).length; }
+/* ---------- Team key: protects the Planning Center link and encrypts everything on the sync servers ---------- */
+function teamKey(){ return store("sc-key") || ""; }
+function setTeamKey(k){ try { if (k) localStorage.setItem("sc-key", k); else localStorage.removeItem("sc-key"); } catch(e){} aesP = null; }
+var aesP = null, aesFor = null;
+function syncKey(){
+  var k = teamKey(); if (!k) return Promise.reject("nokey");
+  if (aesP && aesFor === k) return aesP;
+  aesFor = k;
+  aesP = crypto.subtle.digest("SHA-256", new TextEncoder().encode("stageclock-sync|" + k))
+    .then(function(d){ return crypto.subtle.importKey("raw", d, { name: "AES-GCM" }, false, ["encrypt", "decrypt"]); });
+  return aesP;
+}
+function b64(u8){ var s = ""; for (var i = 0; i < u8.length; i++) s += String.fromCharCode(u8[i]); return btoa(s); }
+function unb64(s){ var b = atob(s), u = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
+function aesSeal(key, obj){
+  var iv = crypto.getRandomValues(new Uint8Array(12));
+  return crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, new TextEncoder().encode(JSON.stringify(obj)))
+    .then(function(ct){ return JSON.stringify({ v: 1, iv: b64(iv), ct: b64(new Uint8Array(ct)) }); });
+}
+function aesOpen(key, str){
+  var o = JSON.parse(str); if (!o || o.v !== 1) return Promise.reject("plain");
+  return crypto.subtle.decrypt({ name: "AES-GCM", iv: unb64(o.iv) }, key, unb64(o.ct)).then(function(pt){ return JSON.parse(new TextDecoder().decode(pt)); });
+}
+function seal(obj){ return syncKey().then(function(k){ return aesSeal(k, obj); }); }
+function unseal(str){ return syncKey().then(function(k){ return aesOpen(k, str); }); }
+function keyHeaders(){ return { "X-Clock-Key": teamKey() }; }
+function lockedOut(){ setTeamKey(""); toast("This device needs to be connected again"); route(); }
+
 function connect(){
   disconnect();
   synced = false; gotState = false;
@@ -550,18 +605,17 @@ function connect(){
     c.on("offline", function(){ c.scReady = false; updateConn(); });
     c.on("error", function(){ updateConn(); });
     c.on("message", function(t, payload){
-      var d; try { d = JSON.parse(new TextDecoder().decode(payload)); } catch(e){ return; }
-      if (t === ACTIVE_TOPIC) { onActive(d); return; }
-      if (t !== topic) return;
-      gotState = true;
-      apply(d);
+      var raw = new TextDecoder().decode(payload);
+      if (t !== ACTIVE_TOPIC && t !== topic) return;
+      if (t === topic) gotState = true;
+      unseal(raw).then(function(d){ if (t === ACTIVE_TOPIC) onActive(d); else apply(d); }, function(){ /* not ours / old unencrypted data */ });
     });
   });
   setTimeout(updateConn, 12000);
 }
 function publishActive(c){
   if (!announce || !c.connected) return;
-  c.publish(ACTIVE_TOPIC, JSON.stringify({ room: announce.room, name: announce.name || "", at: announce.at }), { qos: 1, retain: true });
+  seal({ room: announce.room, name: announce.name || "", at: announce.at }).then(function(p){ if (c.connected) c.publish(ACTIVE_TOPIC, p, { qos: 1, retain: true }); }, function(){});
 }
 function showOnAllScreens(){
   announce = { room: ROOM, name: state.settings.eventName, at: Date.now() };
@@ -583,10 +637,15 @@ function updateConn(){
 }
 var connStart = Date.now();
 function disconnect(){ clients.forEach(function(c){ try { c.end(true); } catch(e){} }); clients = []; connStart = Date.now(); }
-function publishTo(c){ if (c.scReady && c.connected) c.publish(topic, JSON.stringify(state), { qos: 1, retain: true }); }
+function publishTo(c){
+  if (!(c.scReady && c.connected)) return;
+  var t = topic;
+  seal(state).then(function(p){ if (c.connected && t === topic) c.publish(t, p, { qos: 1, retain: true }); }, function(){});
+}
 function publish(){
   store("sc-backup-" + ROOM, JSON.stringify(state));
-  clients.forEach(publishTo);
+  var t = topic;
+  seal(state).then(function(p){ clients.forEach(function(c){ if (c.scReady && c.connected && t === topic) c.publish(t, p, { qos: 1, retain: true }); }); }, function(){});
 }
 function commit(fn){
   if (!synced) { toast("Still connecting …"); return; }
@@ -695,8 +754,9 @@ function mapPco(d){
   return normalize({ items: preOut.concat(out) }).items;
 }
 function hashStr(s){ var h1 = 5381, h2 = 52711; for (var i = 0; i < s.length; i++) { var c = s.charCodeAt(i); h1 = (h1 * 33) ^ c; h2 = (h2 * 33) ^ c; } return (h1 >>> 0).toString(36) + (h2 >>> 0).toString(36); }
-function applyPco(items, hash, plan){
+function applyPco(items, hash, plan, roster){
   commit(function(s){
+    if (roster) s.roster = clone(roster);
     if (eventPlanId() && plan) s.settings.eventName = str(cleanT(plan.title || "") || [plan.serviceType, String(plan.dates || "").replace(/^(\w{3})\w*\s(\d+).*$/, "$1 $2")].filter(Boolean).join(" · ") || "Event", 40);
     var old = cur(s);
     s.items = clone(items);
@@ -758,19 +818,23 @@ function pcoCheck(manual){
   pcoBusy = true;
   if (manual) { pcoStatus = { state: "busy", text: "Checking Planning Center …", at: Date.now() }; renderPco(); }
   var job = mode === "direct" ? fetchDirect(getCred())
-    : fetch(workerUrl() + (workerUrl().indexOf("?") >= 0 ? "&" : "?") + "plan=" + encodeURIComponent(roomPlan()), { cache: "no-store" }).then(function(r){
-        return r.json().then(function(j){ if (!r.ok || j.error) throw { msg: j.error || "Planning Center sync failed" }; return j; });
+    : fetch(workerUrl() + (workerUrl().indexOf("?") >= 0 ? "&" : "?") + "plan=" + encodeURIComponent(roomPlan()), { cache: "no-store", headers: keyHeaders() }).then(function(r){
+        return r.json().then(function(j){
+          if (r.status === 401 && j.error === "locked") { pcoBusy = false; lockedOut(); throw { msg: "Not connected" }; }
+          if (!r.ok || j.error) throw { msg: j.error || "Planning Center sync failed" }; return j;
+        });
       }, function(){ throw { msg: "Can’t reach the Cloudflare link" }; });
   job.then(function(data){
     pcoBusy = false;
     var items = mapPco(data);
     if (!items.length) { pcoStatus = { state: "err", text: "The Planning Center plan has no items for the night", at: Date.now() }; renderPco(); return; }
-    var hash = hashStr(JSON.stringify(items));
+    var roster = normalize({ roster: data.roster || [] }).roster;
+    var hash = hashStr(JSON.stringify(items) + JSON.stringify(roster));
     pcoStatus = { state: "ok", text: "", at: Date.now() };
     if (hash === state.pco.hash) { pcoPending = null; renderPco(); return; }
     var liveGone = state.currentId && state.currentId !== "__end" && !items.some(function(i){ return i.id === state.currentId; });
     if (liveGone) { if (view === "control") { pcoPending = { items: items, hash: hash }; renderPco(); } return; }
-    applyPco(items, hash, data.plan);
+    applyPco(items, hash, data.plan, roster);
     if (view === "control") toast("Updated from Planning Center");
     renderPco();
   }).catch(function(e){
@@ -811,6 +875,7 @@ var ICON = {
   control: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>',
   stage: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>',
   backstage: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4.5A1.5 1.5 0 0 1 6.5 3h11A1.5 1.5 0 0 1 19 4.5V21M3 21h18"/><path d="M15 12h.01"/></svg>',
+  manager: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10 6.5h4M9.5 11h5M9.5 14.5h3"/></svg>',
   list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>',
   cast: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"/><path d="M3 12a8 8 0 0 1 8 8M3 16a4 4 0 0 1 4 4M3 20h.01"/></svg>',
   swap: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/></svg>',
@@ -818,7 +883,7 @@ var ICON = {
   chev: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>',
   play: '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>'
 };
-var ROLE_LABEL = { control: "Control", stage: "Stage display", backstage: "Backstage" };
+var ROLE_LABEL = { control: "Control", stage: "Stage display", backstage: "Backstage", manager: "Stage manager" };
 // Each event can bring its own colour; everything else uses the neutral Message look.
 function accentFor(name){ return /agape/i.test(name || "") ? "#FFE600" : "#F2F2F5"; }
 function applyTheme(name){ try { document.documentElement.style.setProperty("--accent", accentFor(name)); } catch(e){} }
@@ -832,7 +897,7 @@ function topbar(sub, actions, title){
    ============================================================ */
 function parseHash(){
   var h = location.hash.replace(/^#/, "");
-  var m = h.match(/^(stage|control|backstage)(?:\/([A-Za-z0-9_-]{4,64}))?$/);
+  var m = h.match(/^(stage|control|backstage|manager)(?:\/([A-Za-z0-9_-]{4,64}))?$/);
   if (m) return { view: m[1], room: m[2] || null };
   return { view: h === "devices" ? "devices" : "home", room: null };
 }
@@ -840,12 +905,14 @@ function route(){
   var r = parseHash();
   if (r.view === "home") {
     var role = store("sc-role");
-    if (role === "stage" || role === "control" || role === "backstage") { location.replace("#" + role); return; }
+    if (ROLE_LABEL[role]) { location.replace("#" + role); return; }
     r.view = "devices";
   }
+  if (r.view !== "devices" && !teamKey()) { gateFor = r.view; disconnect(); conn = "idle"; view = "gate"; document.body.style.overflow = ""; $("app").innerHTML = gateHTML(); bindGate(); return; }
+  stopPairing();
   var prevRoom = ROOM, prevFollow = FOLLOW, prevView = view;
   view = r.view;
-  FOLLOW = (view === "stage" || view === "backstage") && !r.room;
+  FOLLOW = (view === "stage" || view === "backstage" || view === "manager") && !r.room;
   if (view === "control" && !r.room) view = "pick";
   if (r.room) ROOM = r.room;
   else if (FOLLOW) ROOM = (prevFollow && ROOM) || store("sc-follow-room") || null;
@@ -853,10 +920,12 @@ function route(){
   if (view === "control") { store("sc-last-room", ROOM); }
   document.body.style.overflow = (view === "stage" || view === "backstage") ? "hidden" : "";
   var app = $("app");
+  window.onscroll = null;
   if (view === "devices") { app.innerHTML = devicesHTML(); bindDevices(); }
   else if (view === "pick") { app.innerHTML = pickHTML(); bindPick(); }
   else if (view === "stage") { app.innerHTML = stageHTML(); bindStage(); }
   else if (view === "backstage") { app.innerHTML = backstageHTML(); bindBackstage(); }
+  else if (view === "manager") { app.innerHTML = managerHTML(); bindManager(); }
   else { app.innerHTML = controlHTML(); bindControl(); }
   if (view === "devices" || view === "pick") { disconnect(); conn = "idle"; }
   else if (ROOM !== prevRoom || FOLLOW !== prevFollow || prevView !== view || !clients.length) connect();
@@ -865,9 +934,10 @@ function route(){
 window.addEventListener("hashchange", route);
 
 function fill(){
-  applyTheme((view === "control" || view === "stage" || view === "backstage") && ROOM ? state.settings.eventName : "");
+  applyTheme((view === "control" || view === "stage" || view === "backstage" || view === "manager") && ROOM ? state.settings.eventName : "");
   if (view === "stage") fillStage();
   else if (view === "control") { fillControl(); renderCatch(); }
+  else if (view === "manager") renderManagerPlan();
   renderConn();
   tick();
 }
@@ -876,8 +946,139 @@ function renderConn(){
   var txt = conn === "live" ? (synced ? "Live · " + n + "/" + clients.length : "Syncing …") : conn === "connecting" ? "Connecting …" : conn === "off" ? "No connection – retrying" : "";
   var el = $("cConn");
   if (el) { el.textContent = txt; el.className = "pill " + (conn === "live" && synced ? "live" : conn === "off" ? "off" : ""); }
+  var mg = $("mgConn");
+  if (mg) { mg.textContent = conn === "live" && synced ? "Live" : conn === "off" ? "Offline" : "Connecting …"; mg.className = "pill " + (conn === "live" && synced ? "live" : conn === "off" ? "off" : ""); }
   var st = $("stConn") || $("bsConn");
   if (st) { st.textContent = (conn === "live" && synced) ? "" : (conn === "off" ? "⚠ Not connected to the sync servers – check the internet / Wi-Fi. Retrying …" : txt); st.classList.toggle("bad", conn === "off"); }
+}
+
+/* ============================================================
+   CONNECT A DEVICE (team key + 6-digit pairing)
+   ============================================================ */
+var PAIR_PREFIX = TOPIC_PREFIX + "pair/", gateFor = null, pairClients = [];
+function brokerClients(onConnect, onMessage){
+  var list = [];
+  if (!window.mqtt) return list;
+  BROKERS.forEach(function(url){
+    try {
+      var c = window.mqtt.connect(url, { clientId: "sp_" + rnd(12), clean: true, keepalive: 20, reconnectPeriod: 3000, connectTimeout: 10000 });
+      c.on("connect", function(){ onConnect(c); });
+      c.on("message", function(t, p){ onMessage(t, new TextDecoder().decode(p), c); });
+      list.push(c);
+    } catch(e){}
+  });
+  return list;
+}
+function endClients(list){ list.forEach(function(c){ try { c.end(true); } catch(e){} }); }
+function stopPairing(){ endClients(pairClients); pairClients = []; }
+var ECDH = { name: "ECDH", namedCurve: "P-256" };
+function shared(kp, otherJwk, use){
+  return crypto.subtle.importKey("jwk", otherJwk, ECDH, false, []).then(function(pk){
+    return crypto.subtle.deriveKey({ name: "ECDH", public: pk }, kp.privateKey, { name: "AES-GCM", length: 256 }, false, [use]);
+  });
+}
+// The new device shows a code and waits; a phone that has the key sends it over, encrypted just for this device.
+function startPairing(){
+  stopPairing();
+  var codeEl = $("pairCode"), st = $("pairStatus");
+  if (!window.mqtt || !window.crypto || !crypto.subtle) { if (st) st.textContent = "Can’t connect yet – check the internet."; setTimeout(function(){ if (view === "gate") startPairing(); }, 2000); return; }
+  var code = String(100000 + (crypto.getRandomValues(new Uint32Array(1))[0] % 900000));
+  var screenT = PAIR_PREFIX + code + "/screen", phoneT = PAIR_PREFIX + code + "/phone", done = false;
+  crypto.subtle.generateKey(ECDH, true, ["deriveKey"]).then(function(kp){
+    return crypto.subtle.exportKey("jwk", kp.publicKey).then(function(jwk){
+      if (view !== "gate") return;
+      if (codeEl) codeEl.textContent = code.slice(0, 3) + " " + code.slice(3);
+      if (st) st.textContent = "Connecting …";
+      pairClients = brokerClients(function(c){
+        c.subscribe(phoneT, { qos: 1 });
+        c.publish(screenT, JSON.stringify({ pub: jwk, role: gateFor }), { qos: 1, retain: true });
+        if (st && !done) st.textContent = "Waiting for your phone …";
+      }, function(t, raw){
+        if (t !== phoneT || done || !raw) return;
+        var m; try { m = JSON.parse(raw); } catch(e){ return; }
+        shared(kp, m.pub, "decrypt").then(function(k){ return aesOpen(k, m.box); }).then(function(d){
+          if (done || !d || !d.key) return;
+          done = true; setTeamKey(d.key);
+          pairClients.forEach(function(cc){ if (cc.connected) cc.publish(screenT, "", { qos: 1, retain: true }); });
+          if (st) st.textContent = "Connected ✓";
+          setTimeout(function(){ stopPairing(); toast("Connected"); route(); }, 700);
+        }).catch(function(){});
+      });
+    });
+  });
+}
+// On a phone/laptop that already has the key: send it to the device showing this code.
+function connectScreen(code, cb){
+  code = String(code || "").replace(/\D/g, "");
+  if (code.length !== 6) return cb("Type the 6-digit code shown on the screen.");
+  if (!teamKey()) return cb("This device isn’t connected itself.");
+  var screenT = PAIR_PREFIX + code + "/screen", phoneT = PAIR_PREFIX + code + "/phone", done = false, list = [];
+  var timer = setTimeout(function(){ if (!done) { done = true; endClients(list); cb("No screen found with that code. Check the code and that the screen is online."); } }, 15000);
+  list = brokerClients(function(c){ c.subscribe(screenT, { qos: 1 }); }, function(t, raw){
+    if (done || t !== screenT || !raw) return;
+    var m; try { m = JSON.parse(raw); } catch(e){ return; }
+    if (!m || !m.pub) return;
+    done = true; clearTimeout(timer);
+    crypto.subtle.generateKey(ECDH, true, ["deriveKey"]).then(function(kp){
+      return Promise.all([crypto.subtle.exportKey("jwk", kp.publicKey), shared(kp, m.pub, "encrypt")]);
+    }).then(function(r){
+      return aesSeal(r[1], { key: teamKey() }).then(function(box){
+        var msg = JSON.stringify({ pub: r[0], box: box });
+        list.forEach(function(c){ if (c.connected) c.publish(phoneT, msg, { qos: 1 }); });
+      });
+    }).then(function(){ setTimeout(function(){ endClients(list); }, 2500); cb(null, m.role); },
+             function(){ endClients(list); cb("That didn’t work – please try again."); });
+  });
+}
+function pairBoxHTML(id){
+  return '<div class="pairbox"><input class="input" id="' + id + 'Code" inputmode="numeric" maxlength="7" placeholder="123 456" autocomplete="off"><button class="btn primary" id="' + id + 'Btn" style="padding:12px 18px">Connect</button></div><p class="hint" id="' + id + 'Msg"></p>';
+}
+function bindPairBox(id){
+  var btn = $(id + "Btn"), inp = $(id + "Code"), msg = $(id + "Msg");
+  function go(){
+    msg.style.color = ""; msg.textContent = "Looking for the screen …"; btn.disabled = true;
+    connectScreen(inp.value, function(err, role){
+      btn.disabled = false;
+      if (err) { msg.style.color = "var(--warn)"; msg.textContent = err; return; }
+      inp.value = ""; msg.style.color = "var(--ok)"; msg.textContent = "✓ " + (ROLE_LABEL[role === "pick" ? "control" : role] || "Device") + " connected";
+    });
+  }
+  btn.addEventListener("click", go);
+  inp.addEventListener("keydown", function(e){ if (e.key === "Enter") go(); });
+}
+function gateHTML(){
+  var r = gateFor === "pick" ? "control" : gateFor, isCtl = r === "control";
+  return '<div class="shell"><div class="wrap" style="max-width:760px">' +
+    topbar(ROLE_LABEL[r] || "Device", '<a class="tbtn" href="#devices">' + ICON.swap + '<span>Change device</span></a>') +
+    '<div class="hero" style="text-align:center;margin:18px 0 18px"><div class="kicker">One-time setup</div><h1 style="font-size:clamp(30px,5vw,48px)">Connect this ' + (isCtl || r === "manager" ? "device" : "screen") + '</h1></div>' +
+    '<div class="paircode" id="pairCode">··· ···</div>' +
+    '<p class="pairhint">On a phone that already uses the Stage Clock, open <b style="color:var(--text)">Control → Connect a screen</b><br>and type this code. <span id="pairStatus">Getting a code …</span></p>' +
+    '<details class="more"' + (isCtl ? ' open' : '') + '><summary>' + (isCtl ? "First device? Use the team key" : "I have the team key") + '</summary>' +
+      '<div class="pairbox"><input class="input" id="gKey" placeholder="Team key" autocomplete="off" autocapitalize="off" spellcheck="false" style="font-size:16px;letter-spacing:0;text-align:left;font-weight:600"><button class="btn primary" id="gKeyBtn" style="padding:12px 18px">Connect</button></div>' +
+      '<p class="hint" id="gKeyMsg"></p>' +
+      (isCtl ? '<button class="btn" id="gNewKey" style="width:100%;margin-top:6px">Create a new team key</button><div id="gNewKeyBox"></div>' : '') +
+    '</details>' +
+  '</div></div>';
+}
+function bindGate(){
+  applyTheme("");
+  startPairing();
+  $("gKeyBtn").addEventListener("click", function(){
+    var k = $("gKey").value.trim(), msg = $("gKeyMsg");
+    if (k.length < 12) { msg.style.color = "var(--warn)"; msg.textContent = "That key is too short."; return; }
+    msg.style.color = ""; msg.textContent = "Checking …";
+    fetch(PCO_WORKER_URL.replace(/\/+$/, "") + "/plans", { cache: "no-store", headers: { "X-Clock-Key": k } }).then(function(r){
+      if (r.status === 401) { msg.style.color = "var(--warn)"; msg.textContent = "That key isn’t right."; return; }
+      setTeamKey(k); stopPairing(); toast("Connected"); route();
+    }, function(){ setTeamKey(k); stopPairing(); toast("Saved – couldn’t check it right now"); route(); });
+  });
+  if ($("gNewKey")) $("gNewKey").addEventListener("click", function(){
+    var a = "abcdefghjkmnpqrstuvwxyz23456789", b = new Uint8Array(24), k = "";
+    crypto.getRandomValues(b); for (var i = 0; i < 24; i++) { k += a[b[i] % a.length]; if (i % 6 === 5 && i < 23) k += "-"; }
+    $("gKey").value = k;
+    $("gNewKeyBox").innerHTML = '<div class="keybox">Your new team key:<code>' + esc(k) + '</code>Add it in <b>Cloudflare → agape-pco → Settings → Variables and Secrets</b> as <b>CLOCK_KEY</b> (type Secret), deploy, then tap Connect above. Keep it private – don’t post it anywhere.<button class="mini" id="gCopy" style="margin-top:8px;display:block">Copy key</button></div>';
+    $("gCopy").addEventListener("click", function(){ if (navigator.clipboard) navigator.clipboard.writeText(k).then(function(){ toast("Key copied"); }, function(){}); });
+  });
 }
 
 /* ============================================================
@@ -897,8 +1098,9 @@ function devicesHTML(){
       card("control", "Choose the event, run the timer and send messages. Usually your phone.") +
       card("stage", "The big countdown for the people on stage. Follows the Control automatically.") +
       card("backstage", "Shows who’s on next, for the green room. Follows the Control automatically.") +
+      card("manager", "Live view for your phone: who’s on, who’s needed next, the whole plan. Read-only.") +
     '</div>' +
-    '<p class="foot">Stage and Backstage screens switch to whatever event the Control picks – nothing to type.</p>' +
+    '<p class="foot">Stage, Backstage and Stage manager switch to whatever event the Control picks – nothing to type.</p>' +
   '</div></div>';
 }
 function bindDevices(){
@@ -914,6 +1116,8 @@ function pickHTML(){
     (last ? '<button class="cont" id="contLast"><div class="ri">' + ICON.play + '</div><div style="flex:1;min-width:0"><b>Continue with ' + esc(lastName || "last event") + '</b><span>The event you had open last</span></div><div class="chev" style="color:var(--muted)">' + ICON.chev + '</div></button>' : '') +
     '<div class="row-head" style="margin:0"><div class="sect">From Planning Center</div><button class="mini" id="evReload" style="margin-top:14px">Refresh</button></div>' +
     '<div class="evs" id="evList"><div class="skel"></div><div class="skel"></div></div>' +
+    '<div class="sect">Screens</div>' +
+    '<div class="room" style="background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px"><b style="font-size:16px">Connect a screen or phone</b><p class="hint" style="margin-top:4px">Open the Stage Clock on the new device, choose what it should be, then type the code it shows.</p>' + pairBoxHTML("pk") + '</div>' +
     '<details class="more"><summary>More options</summary>' +
       '<button class="btn" id="newRoom" style="width:100%">New empty clock (without Planning Center)</button>' +
       '<div class="join"><input class="input" id="joinCode" placeholder="Room code" autocomplete="off" autocapitalize="off"><button class="btn" id="joinBtn" style="padding:12px 16px">Open</button></div>' +
@@ -933,6 +1137,7 @@ function bindPick(){
   $("joinCode").addEventListener("keydown", function(e){ if (e.key === "Enter") join(); });
   loadEvents(false);
   $("evReload").addEventListener("click", function(){ loadEvents(true); });
+  bindPairBox("pk");
 }
 
 function evName(e){ return cleanT(e.title || "") || e.serviceType || "Event"; }
@@ -955,7 +1160,10 @@ function renderEvents(list){
 function loadEvents(manual){
   var cached = store("sc-events");
   if (cached && !manual) { try { renderEvents(JSON.parse(cached)); } catch(e){} }
-  fetch(PCO_WORKER_URL.replace(/\/+$/, "") + "/plans", { cache: "no-store" }).then(function(r){ return r.json(); }).then(function(j){
+  fetch(PCO_WORKER_URL.replace(/\/+$/, "") + "/plans", { cache: "no-store", headers: keyHeaders() }).then(function(r){
+    if (r.status === 401) { lockedOut(); throw 0; }
+    return r.json();
+  }).then(function(j){
     if (!j || !Array.isArray(j.plans)) throw 0;
     store("sc-events", JSON.stringify(j.plans));
     renderEvents(j.plans);
@@ -1033,8 +1241,11 @@ function fillStage(){
   var nxt = c ? state.items[i+1] : (state.currentId !== "__end" ? state.items[0] : null);
   $("stNext").innerHTML = (s.showNext && nxt) ? 'Next: <b>' + esc(nxt.title) + '</b>' + (nxt.who ? ' · ' + esc(nxt.who) : '') + ' · ' + esc(durTxt(nxt.dur)) : "";
   var m = $("stMsg");
-  if (state.message && state.message.text) { m.hidden = false; m.textContent = state.message.text; m.classList.toggle("flash", !!state.message.flash); }
-  else m.hidden = true;
+  if (state.message && state.message.text) {
+    var len = state.message.text.length;
+    m.hidden = false; m.textContent = state.message.text;
+    m.className = "st-msg " + (len <= 14 ? "s1" : len <= 36 ? "s2" : len <= 70 ? "s3" : "s4") + (state.message.flash ? " flash" : "");
+  } else m.hidden = true;
   $("stNext").style.visibility = m.hidden ? "visible" : "hidden";
   $("stBlank").hidden = !s.blank;
 }
@@ -1113,9 +1324,142 @@ function tickBackstage(){
 }
 
 /* ============================================================
+   STAGE MANAGER (read-only phone view)
+   ============================================================ */
+function peopleOf(it){
+  if (!it) return [];
+  var out = [], seen = {};
+  function add(name, role){
+    name = String(name || "").trim(); if (!name || /^[?\s]+$/.test(name)) return;
+    var k = name.toLowerCase(); if (seen[k]) { if (role && seen[k].role.indexOf(role) < 0) seen[k].role.push(role); return; }
+    seen[k] = { name: name, role: role ? [role] : [] }; out.push(seen[k]);
+  }
+  String(it.who || "").split(/\s*(?:,|\+|&|\/|\band\b)\s*/i).forEach(function(n){ add(n, ""); });
+  it.songs.forEach(function(g){ String(g.lead || "").split(/\s*(?:,|\+|&|\/|\band\b)\s*/i).forEach(function(n){ add(n, "lead"); }); });
+  return out;
+}
+function peopleHtml(list){
+  if (!list.length) return "";
+  return '<div class="people">' + list.map(function(p){ return '<span class="person">' + esc(p.name) + (p.role.length ? ' <small>' + esc(p.role.join(", ")) + '</small>' : '') + '</span>'; }).join("") + '</div>';
+}
+function managerHTML(){
+  return '<div class="mg">' +
+    topbar("Stage manager", '<span class="pill" id="mgConn">Connecting …</span><a class="tbtn" href="#devices" aria-label="Change device">' + ICON.swap + '</a>', '<span id="mgEvent">Stage Clock</span>') +
+    '<section class="mg-now" id="mgNow">' +
+      '<div class="live-label" id="mgLbl">Live now</div>' +
+      '<div class="mg-row"><div style="min-width:0"><div class="mg-title" id="mgTitle"></div><div class="mg-who" id="mgWho"></div></div><div class="mg-time" id="mgTime"></div></div>' +
+      '<div class="bar"><i id="mgBar"></i></div>' +
+      '<div class="mg-sub"><span id="mgSched"></span><span id="mgClock" style="color:var(--muted)"></span></div>' +
+      '<div class="mg-msg" id="mgMsg" hidden></div>' +
+    '</section>' +
+    '<section class="call" id="mgCall"></section>' +
+    '<div id="mgTeamWrap" hidden><div class="sect" style="margin-top:22px">Team on the plan</div><div class="team" id="mgTeam"></div></div>' +
+    '<div class="sect" style="margin-top:22px">Plan</div>' +
+    '<ol class="tl" id="mgPlan"></ol>' +
+    '<button class="jump" id="mgJump" hidden>Jump to now</button>' +
+  '</div>';
+}
+function bindManager(){
+  $("mgJump").addEventListener("click", function(){ var el = document.querySelector(".tl li.live") || document.querySelector(".tl li.nextup"); if (el) el.scrollIntoView({ behavior: "smooth", block: "center" }); });
+  window.onscroll = function(){
+    var el = document.querySelector(".tl li.live") || document.querySelector(".tl li.nextup"), j = $("mgJump");
+    if (!el || !j) { if (j) j.hidden = true; return; }
+    var r = el.getBoundingClientRect(); j.hidden = r.top > 120 && r.bottom < window.innerHeight;
+  };
+  requestWake();
+}
+function tickManager(){
+  if (!$("mgNow")) return;
+  var s = state.settings, c = cur(), ci = curIdx(), r = remainingMs(), ph = phase(), p = projection(), now = Date.now();
+  $("mgEvent").textContent = ROOM ? s.eventName : "Stage Clock";
+  $("mgClock").textContent = clockTxt();
+  var box = $("mgNow");
+  box.className = "mg-now " + (ph === "idle" ? "" : ph);
+  if (!ROOM) {
+    $("mgLbl").textContent = "Waiting"; $("mgTitle").textContent = "Waiting for an event"; $("mgWho").textContent = "Choose an event on the Control device";
+    $("mgTime").textContent = ""; $("mgBar").style.width = "0"; $("mgSched").textContent = ""; $("mgCall").hidden = true; $("mgMsg").hidden = true; return;
+  }
+  if (c) {
+    var g = c.songs.length ? c.songs[Math.min(state.songIdx, c.songs.length - 1)] : null;
+    $("mgLbl").textContent = state.running ? "Live now" : "Live now · paused";
+    $("mgTitle").textContent = c.title;
+    $("mgWho").textContent = [c.who, g ? "♪ " + g.t + (g.key ? " (" + g.key + ")" : "") + (g.lead ? " – " + g.lead : "") : ""].filter(Boolean).join(" · ");
+    $("mgTime").textContent = fmt(r);
+    $("mgBar").style.width = (c.dur ? Math.max(0, Math.min(1, r / (c.dur*1000))) * 100 : 0) + "%";
+  } else {
+    $("mgLbl").textContent = state.currentId === "__end" ? "Finished" : "Not started";
+    $("mgTitle").textContent = state.currentId === "__end" ? "That’s a wrap" : "Nothing live yet";
+    var first = state.items[0];
+    $("mgWho").textContent = state.currentId !== "__end" && first && first.at ? "Starts " + atTxt(first.at) + " with " + first.title : "";
+    $("mgTime").textContent = ""; $("mgBar").style.width = "0";
+  }
+  var te = targetEnd(), el = $("mgSched");
+  if (c && p.finish && te) {
+    var d = Math.round((p.finish - te) / 60000);
+    el.textContent = Math.abs(d) < 1 ? "On schedule" : d > 0 ? d + " min behind" : (-d) + " min ahead";
+    el.style.color = d >= 1 ? "var(--warn)" : "var(--ok)";
+  } else el.textContent = "";
+  var mm = $("mgMsg");
+  if (state.message && state.message.text) { mm.hidden = false; mm.textContent = "On stage screen: " + state.message.text; } else mm.hidden = true;
+
+  // Who to call next
+  var ni = state.currentId === "__end" ? -1 : (ci >= 0 ? ci + 1 : 0), nx = ni >= 0 ? state.items[ni] : null, call = $("mgCall");
+  if (!nx) { call.hidden = true; }
+  else {
+    call.hidden = false;
+    var start = p.starts[ni], mins = Math.max(0, Math.ceil((start - now) / 60000)), overrun = c && r < 0;
+    var cls = "call", lbl = "Next on stage";
+    if (overrun || mins <= 2) { cls += " now"; lbl = "Call to stage now"; }
+    else if (mins <= 10) { cls += " soon"; lbl = "Get them ready"; }
+    var key = cls + "|" + nx.id + "|" + mins + "|" + overrun;
+    if (call.getAttribute("data-k") !== key) {
+      call.setAttribute("data-k", key); call.className = cls;
+      call.innerHTML = '<div class="lbl">' + lbl + '</div><div class="mg-title">' + esc(nx.title) + '</div>' +
+        '<div class="in">' + (overrun ? "Any moment now" : mins <= 0 ? "Now" : "in " + mins + " min") + ' · ~' + esc(clockTxt(new Date(start))) + (nx.at ? ' <span style="font-weight:600;opacity:.75">(planned ' + esc(atTxt(nx.at)) + ')</span>' : '') + '</div>' +
+        peopleHtml(peopleOf(nx));
+    }
+  }
+  if (tickN % 25 === 0) renderManagerPlan();
+}
+function renderManagerTeam(){
+  var wrap = $("mgTeamWrap"); if (!wrap) return;
+  var r = ROOM ? state.roster : [];
+  if (!r.length) { wrap.hidden = true; return; }
+  wrap.hidden = false;
+  var groups = {}, order = [];
+  r.forEach(function(p){ var t = p.team || "Team"; if (!groups[t]) { groups[t] = []; order.push(t); } groups[t].push(p); });
+  $("mgTeam").innerHTML = order.map(function(t){
+    return '<div class="tg"><b>' + esc(t) + '</b>' + groups[t].map(function(p){
+      return '<div class="pp' + (p.status === "confirmed" ? "" : " unc") + '"><strong style="font-weight:700">' + esc(p.name) + '</strong><span>' + esc(p.position) + '</span></div>';
+    }).join("") + '</div>';
+  }).join("");
+}
+function renderManagerPlan(){
+  renderManagerTeam();
+  var list = $("mgPlan"); if (!list) return;
+  if (!ROOM || !state.items.length) { list.innerHTML = '<li class="hint">' + (ROOM ? "No items yet." : "") + '</li>'; return; }
+  var ci = curIdx(), p = projection(), ni = state.currentId === "__end" ? -1 : (ci >= 0 ? ci + 1 : 0);
+  var hasPre = state.items.some(function(i){ return i.pre; }), firstMain = -1;
+  for (var q = 0; q < state.items.length; q++) if (!state.items[q].pre) { firstMain = q; break; }
+  list.innerHTML = state.items.map(function(it, i){
+    var cls = i === ci ? "live" : (ci >= 0 && i < ci) || state.currentId === "__end" ? "done" : i === ni ? "nextup" : "";
+    var proj = p.starts[i] ? clockTxt(new Date(p.starts[i])) : "";
+    var tm = cls === "live" ? "Now" : it.at ? atTxt(it.at) : (proj ? "~" + proj : "");
+    var sub = cls === "live" || cls === "done" || !proj || !it.at || proj === atTxt(it.at) ? "" : "~" + proj;
+    var sep = "";
+    if (hasPre && i === 0 && it.pre) sep = '<li class="sep">Setup & soundcheck</li>';
+    if (hasPre && i === firstMain) sep = '<li class="sep">Event</li>';
+    var songs = it.songs.length ? '<div class="songs">' + it.songs.map(function(g){ return '<div>' + (g.key ? '<em>' + esc(g.key) + '</em>' : '') + '<span>' + esc(g.t) + (g.lead ? ' – ' + esc(g.lead) : '') + '</span></div>'; }).join("") + '</div>' : '';
+    return sep + '<li class="' + cls + '"><div class="tm">' + esc(tm) + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</div>' +
+      '<div class="bd"><b>' + esc(it.title) + (cls === "live" ? '<span class="tag">Live</span>' : cls === "nextup" ? '<span class="tag nx">Next</span>' : '') + '</b>' +
+      '<span>' + esc([it.who, durTxt(it.dur)].filter(Boolean).join(" · ")) + '</span>' + songs + '</div></li>';
+  }).join("");
+  if (window.onscroll) window.onscroll();
+}
+
+/* ============================================================
    CONTROL
    ============================================================ */
-var CHIPS = ["1 minute left", "5 minutes left", "Please wrap up", "Last song", "One more song", "Louder please 🎤", "Slow down", "Mic on?", "Amazing! 🙌"];
 function controlHTML(){
   return '<div class="ctl">' +
     topbar('Control', '<span class="pill" id="cConn">Connecting …</span><a class="tbtn" href="#control" id="cHome">' + ICON.list + '<span>Events</span></a>', '<span id="cEvent"></span>') +
@@ -1146,9 +1490,10 @@ function controlHTML(){
     '<section class="card">' +
       '<h2>Message to stage</h2>' +
       '<div class="msg-cur" id="cMsgCur" hidden><span id="cMsgTxt"></span><button id="cMsgClear">Clear</button></div>' +
-      '<form class="msg-form" id="msgForm"><input class="input" id="msgInput" placeholder="Type a message …" maxlength="120" autocomplete="off"><button class="btn primary">Send</button></form>' +
-      '<div class="chips" id="chips">' + CHIPS.map(function(t){ return '<button class="chip" data-chip="' + esc(t) + '">' + esc(t) + '</button>'; }).join("") + '</div>' +
+      '<form class="msg-form" id="msgForm"><input class="input" id="msgInput" placeholder="Message for the stage …" maxlength="120" autocomplete="off"><button class="btn primary">Send</button></form>' +
+      
       '<label class="chk"><input type="checkbox" id="msgFlash" checked> Flash message on stage</label>' +
+      '<p class="hint" style="margin-top:8px">The message fills the whole stage screen until you tap Clear.</p>' +
     '</section>' +
     '<section class="card">' +
       '<div class="row-head"><h2>Run sheet</h2><span id="cTotal"></span></div>' +
@@ -1174,6 +1519,7 @@ function controlHTML(){
       '<button class="btn" id="pcoNow" style="width:100%;margin-top:12px">Sync now</button>' +
       '<p class="hint">Changes in Planning Center replace the run sheet here within a minute (the live item keeps running). Edits you make here stay until the next change in Planning Center.</p>' +
       '<details style="margin-top:12px"><summary class="hint" style="cursor:pointer">Advanced</summary>' +
+        '<div class="set-row"><span>Team key</span><span style="display:flex;gap:6px"><button class="mini" id="kCopy">Copy</button><button class="mini" id="kOut">Disconnect device</button></span></div>' +
         '<div class="set-row" style="flex-direction:column;align-items:stretch;gap:8px"><span>Cloudflare link</span><input class="input" id="sPco" placeholder="' + PCO_WORKER_URL + '" autocomplete="off" autocapitalize="off" style="width:100%"></div>' +
         '<div class="set-row" style="flex-direction:column;align-items:stretch;gap:8px"><span>Plan link <small style="color:var(--muted)">(only for the token below)</small></span><input class="input" id="sPlan" autocomplete="off" autocapitalize="off" style="width:100%"></div>' +
         '<div class="set-row" style="flex-direction:column;align-items:stretch;gap:8px"><span>Token on this device instead of Cloudflare</span>' +
@@ -1186,6 +1532,7 @@ function controlHTML(){
       '<h2 style="margin-bottom:4px">Screens</h2>' +
       '<p class="hint" style="margin-top:4px">Stage and Backstage screens show the event you picked. If one shows something else, tap below.</p>' +
       '<button class="btn" id="cShow" style="width:100%;margin-top:12px;display:flex;align-items:center;justify-content:center;gap:8px">' + ICON.cast + 'Show this event on all screens</button>' +
+      '<div style="margin-top:16px"><b style="font-size:15px">Connect a screen or phone</b><p class="hint" style="margin-top:4px">Type the 6-digit code shown on the new device.</p>' + pairBoxHTML("cp") + '</div>' +
       '<div class="devrow"><span>This device: <b style="color:var(--text)">Control</b></span><a class="tbtn" href="#devices">' + ICON.swap + '<span>Change device</span></a></div>' +
     '</section>' +
   '</div></div></div>' +
@@ -1276,10 +1623,11 @@ function confirmBox(text, yes){
 }
 
 function bindControl(){
+  bindPairBox("cp");
   $("cShow").addEventListener("click", function(){ showOnAllScreens(); toast("Stage & Backstage now show this event"); });
   document.querySelectorAll("[data-act]").forEach(function(b){ b.addEventListener("click", function(){ actions[b.getAttribute("data-act")](); }); });
   $("msgForm").addEventListener("submit", function(e){ e.preventDefault(); sendMsg($("msgInput").value); $("msgInput").value = ""; $("msgInput").blur(); });
-  $("chips").addEventListener("click", function(e){ var c = e.target.closest("[data-chip]"); if (c) sendMsg(c.getAttribute("data-chip")); });
+
   $("cMsgClear").addEventListener("click", function(){ commit(function(s){ s.message = null; }); });
   $("cSetlist").addEventListener("click", function(e){ var r = e.target.closest("[data-song]"); if (r) { var n = +r.getAttribute("data-song"); commit(function(s){ s.songIdx = n; }); } });
   $("addBtn").addEventListener("click", function(){ openSheet(null); });
@@ -1329,6 +1677,8 @@ function bindControl(){
     commit(function(s){ s.settings.pcoUrl = v; s.pco = { hash: "", syncedAt: 0 }; });
     if (v) setTimeout(function(){ pcoCheck(true); }, 300);
   });
+  $("kCopy").addEventListener("click", function(){ if (navigator.clipboard) navigator.clipboard.writeText(teamKey()).then(function(){ toast("Team key copied – keep it private"); }, function(){}); });
+  $("kOut").addEventListener("click", function(){ confirmBox("Disconnect this device? You’ll need to connect it again with a code or the team key.", function(){ setTeamKey(""); route(); }); });
   $("credSave").addEventListener("click", function(){
     var id = $("cId").value.trim(), sec = $("cSecret").value.trim();
     if (!id || !sec) { toast("Enter Application ID and Secret"); return; }
@@ -1398,7 +1748,7 @@ function fillControl(){
     }).join("");
   } else card.hidden = true;
 
-  if (state.message && state.message.text) { $("cMsgCur").hidden = false; $("cMsgTxt").textContent = "On stage: " + state.message.text; }
+  if (state.message && state.message.text) { $("cMsgCur").hidden = false; $("cMsgTxt").textContent = "Showing on stage: " + state.message.text; }
   else $("cMsgCur").hidden = true;
   setVal("sName", s.eventName);
   setVal("sWarn", +(s.warnSec/60).toFixed(1));
@@ -1482,6 +1832,8 @@ function tick(){
     $("stState").textContent = !c ? "" : ph === "over" ? "Overtime" : (!state.running ? "Paused" : "");
   } else if (view === "backstage") {
     tickBackstage();
+  } else if (view === "manager") {
+    tickManager();
   } else if (view === "control" && $("cLive")) {
     $("cLive").className = "live " + (ph === "idle" ? "" : ph);
     $("cTimer").textContent = c ? fmt(r) : "0:00";
