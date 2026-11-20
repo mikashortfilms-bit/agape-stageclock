@@ -322,49 +322,46 @@ textarea.input{resize:vertical;min-height:120px;line-height:1.45;font-size:14px}
 .st-fs .mini{background:#ffffff14;border-color:#ffffff22;color:#fff;font-size:14px;padding:9px 14px;display:inline-flex;align-items:center;gap:7px}
 .st-fs .mini svg{width:16px;height:16px}
 /* ---------- Stage manager (phone, read-only) ---------- */
-.mg{max-width:640px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top)) 16px calc(90px + env(safe-area-inset-bottom))}
-.mg-now{position:sticky;top:8px;z-index:5;background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 14%,#121218),#121218 65%);border:1px solid color-mix(in srgb,var(--accent) 30%,#272731);border-radius:22px;padding:16px;box-shadow:0 10px 30px #000a}
-.mg-row{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
-.mg-title{font-size:19px;font-weight:800;line-height:1.15;margin-top:4px}
-.mg-who{font-size:13px;color:var(--muted);margin-top:3px}
-.mg-time{font-size:46px;font-weight:800;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums;flex:none}
-.mg-now.warn .mg-time{color:var(--warn)} .mg-now.over .mg-time{color:var(--over)}
-.mg-now.over .bar>i{background:var(--over)} .mg-now.warn .bar>i{background:var(--warn)}
-.mg-now .bar{margin-top:12px}
-.mg-sub{display:flex;justify-content:space-between;gap:10px;margin-top:10px;font-size:13px;font-weight:700}
-.mg-msg{margin-top:10px;background:var(--accent);color:var(--on-accent);border-radius:12px;padding:9px 12px;font-weight:800;font-size:14px}
-.call{margin-top:14px;border-radius:20px;padding:16px;border:2px solid var(--line);background:var(--panel)}
-.call.soon{border-color:var(--accent)}
-.call.now{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
-.call .lbl{font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
-.call.soon .lbl{color:var(--accent)} .call.now .lbl,.call.now .mg-who{color:var(--on-accent)}
-.call .in{font-size:15px;font-weight:800;margin-top:6px}
-.call.soon .in{color:var(--accent)}
-.people{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
-.person{display:inline-flex;align-items:center;gap:6px;background:var(--panel2);border:1px solid var(--line);border-radius:99px;padding:6px 11px;font-size:14px;font-weight:700}
-.call.now .person{background:#0000001a;border-color:#00000026;color:var(--on-accent)}
-.person small{font-weight:600;color:var(--muted);font-size:12px}
-.call.now .person small{color:#000a}
-.tl{list-style:none;margin-top:6px}
-.tl li{display:flex;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
-.tl li:first-child{border-top:0}
-.tl .tm{width:66px;flex:none;font-size:13px;font-weight:800;font-variant-numeric:tabular-nums}
-.tl .tm small{display:block;font-weight:600;color:var(--muted);margin-top:2px}
-.tl .bd{flex:1;min-width:0}
-.tl .bd b{display:block;font-size:15px}
-.tl .bd span{display:block;font-size:13px;color:var(--muted);margin-top:2px}
-.tl .songs{margin-top:6px;display:grid;gap:3px}
-.tl .songs div{font-size:13px;color:#cfcfd6;display:flex;gap:8px}
-.tl .songs em{font-style:normal;font-weight:800;font-size:11px;background:#ffffff18;border-radius:5px;padding:1px 6px;flex:none}
-.tl li.done{opacity:.4}
-.tl li.live{background:color-mix(in srgb,var(--accent) 9%,transparent);border-radius:14px;padding:12px;margin:2px -12px;border-top:0}
-.tl li.live+li{border-top:0}
-.tl li.live .bd b{color:var(--accent)}
-.tl .tag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;border-radius:99px;padding:2px 7px;margin-left:6px;vertical-align:middle;background:var(--accent);color:var(--on-accent)}
-.tl .bd b .tag{display:inline-block;margin-top:0;font-size:10px;color:var(--on-accent)}
-.tl .bd b .tag.nx{color:var(--text)}
-.tl .tag.nx{background:var(--panel2);color:var(--text);border:1px solid var(--line)}
-.tl .sep{display:block;font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);padding:16px 0 4px;border-top:0}
+.mg{max-width:640px;margin:0 auto;padding:calc(12px + env(safe-area-inset-top)) 14px calc(90px + env(safe-area-inset-bottom))}
+.mbar{position:sticky;top:6px;z-index:6;background:#121218f2;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:18px;padding:12px 14px;box-shadow:0 8px 24px #000a}
+.mbar .r1{display:flex;align-items:center;gap:10px}
+.mbar .dot{width:9px;height:9px;border-radius:50%;background:var(--ok);flex:none;box-shadow:0 0 0 4px color-mix(in srgb,var(--ok) 25%,transparent)}
+.mbar.paused .dot{background:var(--muted);box-shadow:none}
+.mbar.over .dot{background:var(--over)}
+.mbar .t{flex:1;min-width:0;font-weight:800;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mbar .tm{font-weight:800;font-size:26px;letter-spacing:-.02em;font-variant-numeric:tabular-nums;flex:none}
+.mbar.warn .tm{color:var(--warn)} .mbar.over .tm{color:var(--over)}
+.mbar .bar{margin-top:9px;height:4px}
+.mbar.warn .bar>i{background:var(--warn)} .mbar.over .bar>i{background:var(--over)}
+.mbar .r2{display:flex;justify-content:space-between;margin-top:7px;font-size:12px;font-weight:700;color:var(--muted)}
+.mbar .msgl{margin-top:8px;background:var(--accent);color:var(--on-accent);border-radius:10px;padding:7px 10px;font-weight:800;font-size:13px}
+.flow{list-style:none;margin-top:14px;display:grid;gap:8px}
+.flow .sep{font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);padding:12px 4px 2px}
+.fi{display:flex;gap:12px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
+.fi .tm{width:62px;flex:none;font-size:13px;font-weight:800;font-variant-numeric:tabular-nums;padding-top:2px}
+.fi .tm small{display:block;color:var(--muted);font-weight:600;margin-top:2px}
+.fi .bd{flex:1;min-width:0}
+.fi .tt{font-size:16px;font-weight:800;line-height:1.2}
+.fi .mt{font-size:13px;color:var(--muted);margin-top:3px}
+.fi .ppl{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+.fi .pc{background:var(--panel2);border:1px solid var(--line);border-radius:99px;padding:4px 10px;font-size:13px;font-weight:700;white-space:nowrap}
+.fi .pc small{color:var(--muted);font-weight:600;margin-left:4px}
+.fi .tag{display:inline-block;font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;border-radius:99px;padding:3px 8px;margin-bottom:6px}
+.fi.done{padding:7px 14px;background:transparent;border-color:transparent;opacity:.45}
+.fi.done .tt{font-size:14px;font-weight:600}
+.fi.done .tm{font-weight:600}
+.fi.isnow{border:2px solid var(--accent);background:color-mix(in srgb,var(--accent) 7%,var(--panel))}
+.fi.isnow .tag{background:var(--accent);color:var(--on-accent)}
+.fi.next{border:2px solid color-mix(in srgb,var(--accent) 55%,#272731)}
+.fi.next .tag{background:var(--panel2);color:var(--text);border:1px solid var(--line)}
+.fi.next.soon .tag{background:var(--warn);color:#000;border-color:var(--warn)}
+.fi.next.call{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.fi.next.call .tag{background:#000;color:var(--accent);border-color:#000}
+.fi.next.call .mt,.fi.next.call .tm small{color:#000b}
+.fi.next.call .pc{background:#00000018;border-color:#00000030;color:#000}
+.fi.next.call .pc small{color:#000a}
+.fi.then .tag{background:transparent;color:var(--muted);border:1px solid var(--line)}
+.fi .big{font-size:22px}
 .jump{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom));background:var(--accent);color:var(--on-accent);font-weight:800;font-size:15px;border-radius:99px;padding:12px 20px;box-shadow:0 8px 24px #000a;z-index:9}
 /* ---------- Connect / pairing ---------- */
 .paircode{white-space:nowrap;font-size:clamp(52px,10vw,120px);font-weight:900;letter-spacing:.06em;text-align:center;background:var(--panel);border:1px solid var(--line);border-radius:28px;padding:4vh 4vw;font-variant-numeric:tabular-nums;margin-top:6px}
@@ -454,6 +451,7 @@ function normalize(d){
   if (!/^\d{1,12}$/.test(s.settings.pcoPlan || "")) s.settings.pcoPlan = DEFAULT.settings.pcoPlan;
   s.pco = { hash: str(s.pco && s.pco.hash, 64), syncedAt: Number(s.pco && s.pco.syncedAt) || 0 };
   if (s.message && typeof s.message.text !== "string") s.message = null;
+  s.windows = Array.isArray(s.windows) ? s.windows.slice(0, 10).map(function(w){ return { name: str(w && w.name, 40), from: str(w && w.from, 5), to: str(w && w.to, 5), teams: Array.isArray(w && w.teams) ? w.teams.slice(0, 40).map(function(t){ return str(t, 60); }) : null }; }).filter(function(w){ return /^\d{2}:\d{2}$/.test(w.from) && /^\d{2}:\d{2}$/.test(w.to); }) : [];
   s.roster = Array.isArray(s.roster) ? s.roster.slice(0, 200).map(function(r){ return { name: str(r && r.name, 60), position: str(r && r.position, 60), team: str(r && r.team, 60), status: r && r.status === "confirmed" ? "confirmed" : "unconfirmed" }; }).filter(function(r){ return r.name; }) : [];
   return s;
 }
@@ -754,9 +752,10 @@ function mapPco(d){
   return normalize({ items: preOut.concat(out) }).items;
 }
 function hashStr(s){ var h1 = 5381, h2 = 52711; for (var i = 0; i < s.length; i++) { var c = s.charCodeAt(i); h1 = (h1 * 33) ^ c; h2 = (h2 * 33) ^ c; } return (h1 >>> 0).toString(36) + (h2 >>> 0).toString(36); }
-function applyPco(items, hash, plan, roster){
+function applyPco(items, hash, plan, roster, windows){
   commit(function(s){
     if (roster) s.roster = clone(roster);
+    if (windows) s.windows = clone(windows);
     if (eventPlanId() && plan) s.settings.eventName = str(cleanT(plan.title || "") || [plan.serviceType, String(plan.dates || "").replace(/^(\w{3})\w*\s(\d+).*$/, "$1 $2")].filter(Boolean).join(" · ") || "Event", 40);
     var old = cur(s);
     s.items = clone(items);
@@ -829,12 +828,15 @@ function pcoCheck(manual){
     var items = mapPco(data);
     if (!items.length) { pcoStatus = { state: "err", text: "The Planning Center plan has no items for the night", at: Date.now() }; renderPco(); return; }
     var roster = normalize({ roster: data.roster || [] }).roster;
-    var hash = hashStr(JSON.stringify(items) + JSON.stringify(roster));
+    var windows = normalize({ windows: (data.times || []).filter(function(t){ return t.type === "service"; })
+      .map(function(t){ return { name: t.name || "", from: hm(Date.parse(t.startsAt)), to: hm(Date.parse(t.endsAt || t.startsAt)), teams: Array.isArray(t.teams) ? t.teams : null }; })
+      .sort(function(a, b){ return a.from < b.from ? -1 : 1; }) }).windows;
+    var hash = hashStr(JSON.stringify(items) + JSON.stringify(roster) + JSON.stringify(windows));
     pcoStatus = { state: "ok", text: "", at: Date.now() };
     if (hash === state.pco.hash) { pcoPending = null; renderPco(); return; }
     var liveGone = state.currentId && state.currentId !== "__end" && !items.some(function(i){ return i.id === state.currentId; });
     if (liveGone) { if (view === "control") { pcoPending = { items: items, hash: hash }; renderPco(); } return; }
-    applyPco(items, hash, data.plan, roster);
+    applyPco(items, hash, data.plan, roster, windows);
     if (view === "control") toast("Updated from Planning Center");
     renderPco();
   }).catch(function(e){
@@ -1326,134 +1328,129 @@ function tickBackstage(){
 /* ============================================================
    STAGE MANAGER (read-only phone view)
    ============================================================ */
-function peopleOf(it){
-  if (!it) return [];
+function splitNames(s){ return String(s || "").split(/\s*(?:,|\+|&|\/|\band\b)\s*/i).map(function(x){ return x.trim(); }).filter(function(x){ return x && !/^[?\s]+$/.test(x); }); }
+function minutesOf(hhmm){ var p = String(hhmm || "").split(":"); return p.length === 2 ? (+p[0]) * 60 + (+p[1]) : null; }
+var MUSIC = /band|worship|vocal|music|praise|singer/i;
+// Who is needed for an item: names in the plan, song leads, and the band/vocal team scheduled for that part of the night.
+function peopleFor(it){
   var out = [], seen = {};
   function add(name, role){
-    name = String(name || "").trim(); if (!name || /^[?\s]+$/.test(name)) return;
-    var k = name.toLowerCase(); if (seen[k]) { if (role && seen[k].role.indexOf(role) < 0) seen[k].role.push(role); return; }
-    seen[k] = { name: name, role: role ? [role] : [] }; out.push(seen[k]);
+    var k = name.toLowerCase();
+    if (seen[k]) { if (role && !seen[k].role) seen[k].role = role; return; }
+    seen[k] = { name: name, role: role || "" }; out.push(seen[k]);
   }
-  String(it.who || "").split(/\s*(?:,|\+|&|\/|\band\b)\s*/i).forEach(function(n){ add(n, ""); });
-  it.songs.forEach(function(g){ String(g.lead || "").split(/\s*(?:,|\+|&|\/|\band\b)\s*/i).forEach(function(n){ add(n, "lead"); }); });
+  splitNames(it.who).forEach(function(n){ if (!/crew|team$/i.test(n)) add(n, ""); });
+  it.songs.forEach(function(g){ splitNames(g.lead).forEach(function(n){ add(n, "lead"); }); });
+  var roster = state.roster || [], teamNames = [];
+  roster.forEach(function(r){ if (r.team && teamNames.indexOf(r.team) < 0) teamNames.push(r.team); });
+  var t = (it.title + " " + it.who).toLowerCase();
+  var named = teamNames.filter(function(n){ return n && t.indexOf(n.toLowerCase()) >= 0; });
+  var teams = [];
+  if (named.length) teams = named;
+  else if (it.songs.length) {
+    var music = teamNames.filter(function(n){ return MUSIC.test(n); });
+    var numbered = music.filter(function(n){ return /\d/.test(n); });
+    var wins = state.windows || [], m = minutesOf(it.at), k = -1;
+    // The service time this item belongs to (15 min tolerance, because a set often starts a little before the next service time).
+    if (wins.length && m != null) { k = 0; wins.forEach(function(w, i){ if (m + 15 >= minutesOf(w.from)) k = i; }); }
+    if (k >= 0 && wins[k].teams && wins.some(function(w){ return w.teams && w.teams.length; })) {
+      // Best: Planning Center says which teams are assigned to this service time.
+      teams = music.filter(function(n){ return wins[k].teams.indexOf(n) >= 0; });
+    } else if (numbered.length >= 2 && wins.length >= 2 && k >= 0) {
+      teams = music.filter(function(n){ var d = n.match(/\d+/); return !d || +d[0] === k + 1; });
+    } else teams = music;
+  }
+  roster.forEach(function(r){ if (teams.indexOf(r.team) >= 0) add(r.name, r.position); });
   return out;
 }
-function peopleHtml(list){
+function chipsHtml(list){
   if (!list.length) return "";
-  return '<div class="people">' + list.map(function(p){ return '<span class="person">' + esc(p.name) + (p.role.length ? ' <small>' + esc(p.role.join(", ")) + '</small>' : '') + '</span>'; }).join("") + '</div>';
+  return '<div class="ppl">' + list.map(function(p){ return '<span class="pc">' + esc(p.name) + (p.role ? '<small>' + esc(p.role) + '</small>' : '') + '</span>'; }).join("") + '</div>';
 }
 function managerHTML(){
   return '<div class="mg">' +
     topbar("Stage manager", '<span class="pill" id="mgConn">Connecting …</span><a class="tbtn" href="#devices" aria-label="Change device">' + ICON.swap + '</a>', '<span id="mgEvent">Stage Clock</span>') +
-    '<section class="mg-now" id="mgNow">' +
-      '<div class="live-label" id="mgLbl">Live now</div>' +
-      '<div class="mg-row"><div style="min-width:0"><div class="mg-title" id="mgTitle"></div><div class="mg-who" id="mgWho"></div></div><div class="mg-time" id="mgTime"></div></div>' +
-      '<div class="bar"><i id="mgBar"></i></div>' +
-      '<div class="mg-sub"><span id="mgSched"></span><span id="mgClock" style="color:var(--muted)"></span></div>' +
-      '<div class="mg-msg" id="mgMsg" hidden></div>' +
+    '<section class="mbar" id="mgBar">' +
+      '<div class="r1"><span class="dot"></span><span class="t" id="mgTitle"></span><span class="tm" id="mgTime"></span></div>' +
+      '<div class="bar"><i id="mgProg"></i></div>' +
+      '<div class="r2"><span id="mgSched"></span><span id="mgClock"></span></div>' +
+      '<div class="msgl" id="mgMsg" hidden></div>' +
     '</section>' +
-    '<section class="call" id="mgCall"></section>' +
-    '<div id="mgTeamWrap" hidden><div class="sect" style="margin-top:22px">Team on the plan</div><div class="team" id="mgTeam"></div></div>' +
-    '<div class="sect" style="margin-top:22px">Plan</div>' +
-    '<ol class="tl" id="mgPlan"></ol>' +
+    '<ol class="flow" id="mgPlan"></ol>' +
     '<button class="jump" id="mgJump" hidden>Jump to now</button>' +
   '</div>';
 }
+var mgScrolled = false;
+function mgFocus(){ return document.querySelector(".fi.isnow") || document.querySelector(".fi.next"); }
 function bindManager(){
-  $("mgJump").addEventListener("click", function(){ var el = document.querySelector(".tl li.live") || document.querySelector(".tl li.nextup"); if (el) el.scrollIntoView({ behavior: "smooth", block: "center" }); });
+  mgScrolled = false;
+  $("mgJump").addEventListener("click", function(){ var el = mgFocus(); if (el) el.scrollIntoView({ behavior: "smooth", block: "center" }); });
   window.onscroll = function(){
-    var el = document.querySelector(".tl li.live") || document.querySelector(".tl li.nextup"), j = $("mgJump");
-    if (!el || !j) { if (j) j.hidden = true; return; }
-    var r = el.getBoundingClientRect(); j.hidden = r.top > 120 && r.bottom < window.innerHeight;
+    var el = mgFocus(), j = $("mgJump");
+    if (!j) return;
+    if (!el) { j.hidden = true; return; }
+    var r = el.getBoundingClientRect(); j.hidden = r.top > 110 && r.bottom < window.innerHeight - 70;
   };
   requestWake();
 }
 function tickManager(){
-  if (!$("mgNow")) return;
-  var s = state.settings, c = cur(), ci = curIdx(), r = remainingMs(), ph = phase(), p = projection(), now = Date.now();
+  if (!$("mgBar")) return;
+  var s = state.settings, c = cur(), r = remainingMs(), ph = phase(), p = projection();
   $("mgEvent").textContent = ROOM ? s.eventName : "Stage Clock";
   $("mgClock").textContent = clockTxt();
-  var box = $("mgNow");
-  box.className = "mg-now " + (ph === "idle" ? "" : ph);
-  if (!ROOM) {
-    $("mgLbl").textContent = "Waiting"; $("mgTitle").textContent = "Waiting for an event"; $("mgWho").textContent = "Choose an event on the Control device";
-    $("mgTime").textContent = ""; $("mgBar").style.width = "0"; $("mgSched").textContent = ""; $("mgCall").hidden = true; $("mgMsg").hidden = true; return;
-  }
+  var bar = $("mgBar");
+  bar.className = "mbar " + (ph === "idle" ? "" : ph) + (c && !state.running ? " paused" : "");
+  if (!ROOM) { $("mgTitle").textContent = "Waiting for an event"; $("mgTime").textContent = ""; $("mgProg").style.width = "0"; $("mgSched").textContent = "Choose an event on the Control"; $("mgMsg").hidden = true; return; }
   if (c) {
-    var g = c.songs.length ? c.songs[Math.min(state.songIdx, c.songs.length - 1)] : null;
-    $("mgLbl").textContent = state.running ? "Live now" : "Live now · paused";
-    $("mgTitle").textContent = c.title;
-    $("mgWho").textContent = [c.who, g ? "♪ " + g.t + (g.key ? " (" + g.key + ")" : "") + (g.lead ? " – " + g.lead : "") : ""].filter(Boolean).join(" · ");
+    $("mgTitle").textContent = c.title + (state.running ? "" : " · paused");
     $("mgTime").textContent = fmt(r);
-    $("mgBar").style.width = (c.dur ? Math.max(0, Math.min(1, r / (c.dur*1000))) * 100 : 0) + "%";
+    $("mgProg").style.width = (c.dur ? Math.max(0, Math.min(1, r / (c.dur*1000))) * 100 : 0) + "%";
   } else {
-    $("mgLbl").textContent = state.currentId === "__end" ? "Finished" : "Not started";
-    $("mgTitle").textContent = state.currentId === "__end" ? "That’s a wrap" : "Nothing live yet";
-    var first = state.items[0];
-    $("mgWho").textContent = state.currentId !== "__end" && first && first.at ? "Starts " + atTxt(first.at) + " with " + first.title : "";
-    $("mgTime").textContent = ""; $("mgBar").style.width = "0";
+    $("mgTitle").textContent = state.currentId === "__end" ? "That’s a wrap" : "Not started yet";
+    $("mgTime").textContent = ""; $("mgProg").style.width = "0";
   }
   var te = targetEnd(), el = $("mgSched");
   if (c && p.finish && te) {
     var d = Math.round((p.finish - te) / 60000);
     el.textContent = Math.abs(d) < 1 ? "On schedule" : d > 0 ? d + " min behind" : (-d) + " min ahead";
     el.style.color = d >= 1 ? "var(--warn)" : "var(--ok)";
-  } else el.textContent = "";
+  } else { el.textContent = ""; }
   var mm = $("mgMsg");
   if (state.message && state.message.text) { mm.hidden = false; mm.textContent = "On stage screen: " + state.message.text; } else mm.hidden = true;
-
-  // Who to call next
-  var ni = state.currentId === "__end" ? -1 : (ci >= 0 ? ci + 1 : 0), nx = ni >= 0 ? state.items[ni] : null, call = $("mgCall");
-  if (!nx) { call.hidden = true; }
-  else {
-    call.hidden = false;
-    var start = p.starts[ni], mins = Math.max(0, Math.ceil((start - now) / 60000)), overrun = c && r < 0;
-    var cls = "call", lbl = "Next on stage";
-    if (overrun || mins <= 2) { cls += " now"; lbl = "Call to stage now"; }
-    else if (mins <= 10) { cls += " soon"; lbl = "Get them ready"; }
-    var key = cls + "|" + nx.id + "|" + mins + "|" + overrun;
-    if (call.getAttribute("data-k") !== key) {
-      call.setAttribute("data-k", key); call.className = cls;
-      call.innerHTML = '<div class="lbl">' + lbl + '</div><div class="mg-title">' + esc(nx.title) + '</div>' +
-        '<div class="in">' + (overrun ? "Any moment now" : mins <= 0 ? "Now" : "in " + mins + " min") + ' · ~' + esc(clockTxt(new Date(start))) + (nx.at ? ' <span style="font-weight:600;opacity:.75">(planned ' + esc(atTxt(nx.at)) + ')</span>' : '') + '</div>' +
-        peopleHtml(peopleOf(nx));
-    }
-  }
-  if (tickN % 25 === 0) renderManagerPlan();
+  if (tickN % 5 === 0) renderManagerPlan();
 }
-function renderManagerTeam(){
-  var wrap = $("mgTeamWrap"); if (!wrap) return;
-  var r = ROOM ? state.roster : [];
-  if (!r.length) { wrap.hidden = true; return; }
-  wrap.hidden = false;
-  var groups = {}, order = [];
-  r.forEach(function(p){ var t = p.team || "Team"; if (!groups[t]) { groups[t] = []; order.push(t); } groups[t].push(p); });
-  $("mgTeam").innerHTML = order.map(function(t){
-    return '<div class="tg"><b>' + esc(t) + '</b>' + groups[t].map(function(p){
-      return '<div class="pp' + (p.status === "confirmed" ? "" : " unc") + '"><strong style="font-weight:700">' + esc(p.name) + '</strong><span>' + esc(p.position) + '</span></div>';
-    }).join("") + '</div>';
-  }).join("");
-}
+var mgLast = "";
 function renderManagerPlan(){
-  renderManagerTeam();
   var list = $("mgPlan"); if (!list) return;
-  if (!ROOM || !state.items.length) { list.innerHTML = '<li class="hint">' + (ROOM ? "No items yet." : "") + '</li>'; return; }
-  var ci = curIdx(), p = projection(), ni = state.currentId === "__end" ? -1 : (ci >= 0 ? ci + 1 : 0);
+  if (!ROOM || !state.items.length) { list.innerHTML = ROOM ? '<li class="hint">No items yet.</li>' : ""; mgLast = ""; return; }
+  var ci = curIdx(), p = projection(), now = Date.now(), end = state.currentId === "__end";
+  var ni = end ? -1 : (ci >= 0 ? ci + 1 : 0), c = cur(), overrun = c && remainingMs() < 0;
   var hasPre = state.items.some(function(i){ return i.pre; }), firstMain = -1;
   for (var q = 0; q < state.items.length; q++) if (!state.items[q].pre) { firstMain = q; break; }
-  list.innerHTML = state.items.map(function(it, i){
-    var cls = i === ci ? "live" : (ci >= 0 && i < ci) || state.currentId === "__end" ? "done" : i === ni ? "nextup" : "";
-    var proj = p.starts[i] ? clockTxt(new Date(p.starts[i])) : "";
-    var tm = cls === "live" ? "Now" : it.at ? atTxt(it.at) : (proj ? "~" + proj : "");
-    var sub = cls === "live" || cls === "done" || !proj || !it.at || proj === atTxt(it.at) ? "" : "~" + proj;
+  var html = state.items.map(function(it, i){
     var sep = "";
     if (hasPre && i === 0 && it.pre) sep = '<li class="sep">Setup & soundcheck</li>';
     if (hasPre && i === firstMain) sep = '<li class="sep">Event</li>';
-    var songs = it.songs.length ? '<div class="songs">' + it.songs.map(function(g){ return '<div>' + (g.key ? '<em>' + esc(g.key) + '</em>' : '') + '<span>' + esc(g.t) + (g.lead ? ' – ' + esc(g.lead) : '') + '</span></div>'; }).join("") + '</div>' : '';
+    var done = end || (ci >= 0 && i < ci), start = p.starts[i];
+    var planned = it.at ? atTxt(it.at) : "", proj = start ? clockTxt(new Date(start)) : "";
+    if (done) return sep + '<li class="fi done"><div class="tm">' + esc(planned) + '</div><div class="bd"><div class="tt">' + esc(it.title) + ' ✓</div></div></li>';
+    var cls = "fi", tag = "", tm = planned, sub = proj && proj !== planned ? "~" + proj : "", mt = [it.who, durTxt(it.dur)].filter(Boolean).join(" · ");
+    if (i === ci) { cls += " isnow"; tag = "Now"; tm = "Now"; sub = ""; mt = [it.who, fmt(remainingMs()) + " left"].filter(Boolean).join(" · "); }
+    else if (i === ni) {
+      var mins = Math.max(0, Math.ceil((start - now) / 60000));
+      cls += " next";
+      if (ci >= 0 && (overrun || mins <= 2)) { cls += " call"; tag = "Call to stage now"; }
+      else if (ci >= 0 && mins <= 10) { cls += " soon"; tag = "Next · get ready · in " + mins + " min"; }
+      else tag = "Next" + (start ? " · in " + mins + " min" : "");
+    }
+    else if (i === ni + 1) { cls += " then"; tag = "Then"; }
+    var big = i === ci || i === ni;
     return sep + '<li class="' + cls + '"><div class="tm">' + esc(tm) + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</div>' +
-      '<div class="bd"><b>' + esc(it.title) + (cls === "live" ? '<span class="tag">Live</span>' : cls === "nextup" ? '<span class="tag nx">Next</span>' : '') + '</b>' +
-      '<span>' + esc([it.who, durTxt(it.dur)].filter(Boolean).join(" · ")) + '</span>' + songs + '</div></li>';
+      '<div class="bd">' + (tag ? '<span class="tag">' + esc(tag) + '</span>' : '') + '<div class="tt' + (big ? ' big' : '') + '">' + esc(it.title) + '</div>' +
+      '<div class="mt">' + esc(mt) + '</div>' + chipsHtml(peopleFor(it)) + '</div></li>';
   }).join("");
+  if (html !== mgLast) { list.innerHTML = html; mgLast = html; }
+  if (!mgScrolled && (ci >= 0 || ni > 0)) { mgScrolled = true; var el = mgFocus(); if (el) setTimeout(function(){ el.scrollIntoView({ block: "center" }); }, 50); }
   if (window.onscroll) window.onscroll();
 }
 
