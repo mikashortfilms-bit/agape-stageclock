@@ -21,6 +21,7 @@
   --ok:#2fe39b; --warn:#ff8a1f; --over:#ff3b47;
 }
 *{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
 button,input,textarea{font:inherit;color:inherit}
 button{border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
@@ -322,7 +323,7 @@ textarea.input{resize:vertical;min-height:120px;line-height:1.45;font-size:14px}
 .st-fs .mini{background:#ffffff14;border-color:#ffffff22;color:#fff;font-size:14px;padding:9px 14px;display:inline-flex;align-items:center;gap:7px}
 .st-fs .mini svg{width:16px;height:16px}
 /* ---------- Stage manager (phone, read-only) ---------- */
-.mg{max-width:640px;margin:0 auto;padding:calc(12px + env(safe-area-inset-top)) 14px calc(90px + env(safe-area-inset-bottom))}
+.mg{overflow-x:clip;max-width:640px;margin:0 auto;padding:calc(12px + env(safe-area-inset-top)) 14px calc(90px + env(safe-area-inset-bottom))}
 .mbar{position:sticky;top:6px;z-index:6;background:#121218f2;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:18px;padding:12px 14px;box-shadow:0 8px 24px #000a}
 .mbar .r1{display:flex;align-items:center;gap:10px}
 .mbar .dot{width:9px;height:9px;border-radius:50%;background:var(--ok);flex:none;box-shadow:0 0 0 4px color-mix(in srgb,var(--ok) 25%,transparent)}
@@ -340,11 +341,13 @@ textarea.input{resize:vertical;min-height:120px;line-height:1.45;font-size:14px}
 .fi{display:flex;gap:12px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
 .fi .tm{width:62px;flex:none;font-size:13px;font-weight:800;font-variant-numeric:tabular-nums;padding-top:2px}
 .fi .tm small{display:block;color:var(--muted);font-weight:600;margin-top:2px}
+.fi{min-width:0;max-width:100%}
 .fi .bd{flex:1;min-width:0}
+.fi .tt{overflow-wrap:anywhere}
 .fi .tt{font-size:16px;font-weight:800;line-height:1.2}
 .fi .mt{font-size:13px;color:var(--muted);margin-top:3px}
 .fi .ppl{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
-.fi .pc{background:var(--panel2);border:1px solid var(--line);border-radius:99px;padding:4px 10px;font-size:13px;font-weight:700;white-space:nowrap}
+.fi .pc{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:4px 10px;font-size:13px;font-weight:700;max-width:100%;overflow-wrap:anywhere}
 .fi .pc small{color:var(--muted);font-weight:600;margin-left:4px}
 .fi .tag{display:inline-block;font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;border-radius:99px;padding:3px 8px;margin-bottom:6px}
 .fi.done{padding:7px 14px;background:transparent;border-color:transparent;opacity:.45}
