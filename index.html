@@ -451,8 +451,8 @@ function normalize(d){
   if (!/^\d{1,12}$/.test(s.settings.pcoPlan || "")) s.settings.pcoPlan = DEFAULT.settings.pcoPlan;
   s.pco = { hash: str(s.pco && s.pco.hash, 64), syncedAt: Number(s.pco && s.pco.syncedAt) || 0 };
   if (s.message && typeof s.message.text !== "string") s.message = null;
-  s.windows = Array.isArray(s.windows) ? s.windows.slice(0, 10).map(function(w){ return { name: str(w && w.name, 40), from: str(w && w.from, 5), to: str(w && w.to, 5), teams: Array.isArray(w && w.teams) ? w.teams.slice(0, 40).map(function(t){ return str(t, 60); }) : null }; }).filter(function(w){ return /^\d{2}:\d{2}$/.test(w.from) && /^\d{2}:\d{2}$/.test(w.to); }) : [];
-  s.roster = Array.isArray(s.roster) ? s.roster.slice(0, 200).map(function(r){ return { name: str(r && r.name, 60), position: str(r && r.position, 60), team: str(r && r.team, 60), status: r && r.status === "confirmed" ? "confirmed" : "unconfirmed" }; }).filter(function(r){ return r.name; }) : [];
+  s.windows = Array.isArray(s.windows) ? s.windows.slice(0, 10).map(function(w){ return { id: str(w && w.id, 20), name: str(w && w.name, 40), from: str(w && w.from, 5), to: str(w && w.to, 5), teams: Array.isArray(w && w.teams) ? w.teams.slice(0, 40).map(function(t){ return str(t, 60); }) : null }; }).filter(function(w){ return /^\d{2}:\d{2}$/.test(w.from) && /^\d{2}:\d{2}$/.test(w.to); }) : [];
+  s.roster = Array.isArray(s.roster) ? s.roster.slice(0, 200).map(function(r){ return { name: str(r && r.name, 60), position: str(r && r.position, 60), team: str(r && r.team, 60), status: r && r.status === "confirmed" ? "confirmed" : "unconfirmed", times: Array.isArray(r && r.times) ? r.times.slice(0, 20).map(function(x){ return str(x, 20); }) : null }; }).filter(function(r){ return r.name; }) : [];
   return s;
 }
 function cur(s){ s = s || state; for (var i=0;i<s.items.length;i++) if (s.items[i].id === s.currentId) return s.items[i]; return null; }
@@ -829,7 +829,7 @@ function pcoCheck(manual){
     if (!items.length) { pcoStatus = { state: "err", text: "The Planning Center plan has no items for the night", at: Date.now() }; renderPco(); return; }
     var roster = normalize({ roster: data.roster || [] }).roster;
     var windows = normalize({ windows: (data.times || []).filter(function(t){ return t.type === "service"; })
-      .map(function(t){ return { name: t.name || "", from: hm(Date.parse(t.startsAt)), to: hm(Date.parse(t.endsAt || t.startsAt)), teams: Array.isArray(t.teams) ? t.teams : null }; })
+      .map(function(t){ return { id: String(t.id || ""), name: t.name || "", from: hm(Date.parse(t.startsAt)), to: hm(Date.parse(t.endsAt || t.startsAt)), teams: Array.isArray(t.teams) ? t.teams : null }; })
       .sort(function(a, b){ return a.from < b.from ? -1 : 1; }) }).windows;
     var hash = hashStr(JSON.stringify(items) + JSON.stringify(roster) + JSON.stringify(windows));
     pcoStatus = { state: "ok", text: "", at: Date.now() };
@@ -1331,37 +1331,61 @@ function tickBackstage(){
 function splitNames(s){ return String(s || "").split(/\s*(?:,|\+|&|\/|\band\b)\s*/i).map(function(x){ return x.trim(); }).filter(function(x){ return x && !/^[?\s]+$/.test(x); }); }
 function minutesOf(hhmm){ var p = String(hhmm || "").split(":"); return p.length === 2 ? (+p[0]) * 60 + (+p[1]) : null; }
 var MUSIC = /band|worship|vocal|music|praise|singer/i;
-// Who is needed for an item: names in the plan, song leads, and the band/vocal team scheduled for that part of the night.
+// Who is needed for an item: names in the plan, song leads, and the band/vocals scheduled for that part of the night.
+function windowFor(it){
+  var wins = state.windows || [], m = minutesOf(it.at);
+  if (!wins.length || m == null) return -1;
+  // 15 min tolerance, because a set often starts a little before the next service time.
+  var k = 0; wins.forEach(function(w, i){ if (m + 15 >= minutesOf(w.from)) k = i; });
+  return k;
+}
+function roleOf(r){ return /^worship team$/i.test(r.position || "") || !r.position ? (r.team || "") : r.position; }
 function peopleFor(it){
-  var out = [], seen = {};
+  var out = [];
+  // "Josh W." / "Josh" and "Josh Woodfield" are the same person.
+  function same(x, y){
+    var a = x.toLowerCase().replace(/\./g, "").split(/\s+/), b = y.toLowerCase().replace(/\./g, "").split(/\s+/);
+    if (a.length > b.length) { var t = a; a = b; b = t; }
+    if (a[0] !== b[0]) return false;
+    return a.length === 1 || (b[1] && a[1] && b[1].indexOf(a[1]) === 0);
+  }
+  function find(name){ for (var i = 0; i < out.length; i++) if (same(out[i].name, name)) return out[i]; return null; }
   function add(name, role){
-    var k = name.toLowerCase();
-    if (seen[k]) { if (role && !seen[k].role) seen[k].role = role; return; }
-    seen[k] = { name: name, role: role || "" }; out.push(seen[k]);
+    var ex = find(name);
+    if (ex) {
+      if (name.length > ex.name.length) ex.name = name;           // keep the full name
+      if (role && ex.roles.indexOf(role) < 0) ex.roles.push(role);
+      return;
+    }
+    out.push({ name: name, roles: role ? [role] : [] });
   }
   splitNames(it.who).forEach(function(n){ if (!/crew|team$/i.test(n)) add(n, ""); });
   it.songs.forEach(function(g){ splitNames(g.lead).forEach(function(n){ add(n, "lead"); }); });
-  var roster = state.roster || [], teamNames = [];
-  roster.forEach(function(r){ if (r.team && teamNames.indexOf(r.team) < 0) teamNames.push(r.team); });
-  var t = (it.title + " " + it.who).toLowerCase();
-  var named = teamNames.filter(function(n){ return n && t.indexOf(n.toLowerCase()) >= 0; });
-  var teams = [];
-  if (named.length) teams = named;
-  else if (it.songs.length) {
-    var music = teamNames.filter(function(n){ return MUSIC.test(n); });
-    var numbered = music.filter(function(n){ return /\d/.test(n); });
-    var wins = state.windows || [], m = minutesOf(it.at), k = -1;
-    // The service time this item belongs to (15 min tolerance, because a set often starts a little before the next service time).
-    if (wins.length && m != null) { k = 0; wins.forEach(function(w, i){ if (m + 15 >= minutesOf(w.from)) k = i; }); }
-    if (k >= 0 && wins[k].teams && wins.some(function(w){ return w.teams && w.teams.length; })) {
-      // Best: Planning Center says which teams are assigned to this service time.
-      teams = music.filter(function(n){ return wins[k].teams.indexOf(n) >= 0; });
-    } else if (numbered.length >= 2 && wins.length >= 2 && k >= 0) {
-      teams = music.filter(function(n){ var d = n.match(/\d+/); return !d || +d[0] === k + 1; });
-    } else teams = music;
+
+  var roster = state.roster || [], wins = state.windows || [];
+  var music = roster.filter(function(r){ return MUSIC.test(r.team); });
+  var haveTimes = music.some(function(r){ return r.times && r.times.length; }) && wins.some(function(w){ return w.id; });
+  var pick = [];
+  var numMatch = (it.title + " " + it.who).match(/(?:team|band|group)\s*(\d)/i);
+  if (it.songs.length || numMatch) {
+    var k = numMatch ? Math.min(+numMatch[1] - 1, wins.length - 1) : windowFor(it);
+    if (haveTimes && k >= 0) {
+      var wid = wins[k].id;
+      pick = music.filter(function(r){ return r.times && r.times.indexOf(wid) >= 0; });
+    } else if (it.songs.length) {
+      var teamNames = []; music.forEach(function(r){ if (teamNames.indexOf(r.team) < 0) teamNames.push(r.team); });
+      if (k >= 0 && wins[k].teams && wins.some(function(w){ return w.teams && w.teams.length; })) pick = music.filter(function(r){ return wins[k].teams.indexOf(r.team) >= 0; });
+      else {
+        var numbered = teamNames.filter(function(n){ return /\d/.test(n); });
+        pick = numbered.length >= 2 && k >= 0 ? music.filter(function(r){ var d = r.team.match(/\d+/); return !d || +d[0] === k + 1; }) : music;
+      }
+    }
+  } else {
+    var t = (it.title + " " + it.who).toLowerCase();
+    pick = roster.filter(function(r){ return r.team && t.indexOf(r.team.toLowerCase()) >= 0; });
   }
-  roster.forEach(function(r){ if (teams.indexOf(r.team) >= 0) add(r.name, r.position); });
-  return out;
+  pick.forEach(function(r){ add(r.name, roleOf(r)); });
+  return out.map(function(o){ return { name: o.name, role: o.roles.join(", ") }; });
 }
 function chipsHtml(list){
   if (!list.length) return "";
